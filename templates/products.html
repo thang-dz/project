@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Inventory Management App</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Dashboard</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Products</li>
+        </ol>
+        
+        <!-- Form Thêm sản phẩm -->
+        <div class="card mb-4">
+            <div class="card-header">New Product</div>
+            <div class="card-body">
+                <form action="/products/" method="POST" id="product_form">
+                    <label for="product_name" class="col-form-label">Product Name</label>
+                    <input type="text" name="product_name" id="product_name" required class="form-control">
+                    <br>
+                    <label for="pro_category" class="col-form-label">Category</label>
+                    <input type="text" name="pro_category" id="pro_category" class="form-control">
+                    <br>
+                    <label for="pro_unit_price" class="col-form-label">Unit Price</label>
+                    <input type="number" step="0.01" name="pro_unit_price" id="pro_unit_price" required class="form-control">
+                    <br>
+                    <label for="pro_stock" class="col-form-label">Stock</label>
+                    <input type="number" name="pro_stock" id="pro_stock" class="form-control">
+                    <br>
+                    <label for="pro_reorder_level" class="col-form-label">Reorder Level</label>
+                    <input type="number" name="pro_reorder_level" id="pro_reorder_level" value="10" class="form-control">
+                    <br>
+                    <label for="pro_supplier_id" class="col-form-label">Supplier </label>
+                    <select name="pro_supplier_id" id="pro_supplier_id" class="form-control">
+                        {% for supplier in suppliers %}
+                        <option value="{{ supplier.supplier_id }}">{{ supplier.sup_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <input id="submitProduct" value="Add Product" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-table mr-1"></i>
+                Products Table
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if products|length < 1 %}
+                    <h4>There are no Products, add one above</h4>
+                    {% else %}
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th> <!-- Thêm cột cho Product ID -->
+                                <th>Product Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Reorder Level</th>
+                                <th>Supplier</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.product_id }}</td> <!-- Hiển thị ID sản phẩm -->
+                                <td>{{ product.pro_name }}</td>
+                                <td>{{ product.pro_category }}</td>
+                                <td>{{ product.pro_unit_price }}</td>
+                                <td>{{ product.pro_stock }}</td>
+                                <td>{{ product.pro_reorder_level }}</td>
+                                <td>{{ product.supplier.sup_name }}</td>
+                                <td>{{ product.last_updated.date() }}</td>
+                                <td>
+                                    <a href="/delete-product/{{ product.product_id }}">Delete</a>
+                                    <br>
+                                    <a href="/update-product/{{ product.product_id }}">Update</a>  
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    {% endif %}
+            </div>
+    </div>
+</main>
+{% endblock %}

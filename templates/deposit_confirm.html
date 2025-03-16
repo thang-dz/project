@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Deposit Confirm</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Deposit Confirm</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item active">Deposit Confirm</li>
+            
+        </ol>
+        <div class="card mb-4">
+            <div class="card-header">Deposit Confirm Table</div>
+            <div class="card-body">
+                <form action="/deposit-confirm/" method="POST">
+                    <label for="order_id" class="col-form-label">Order ID</label>
+                    <input type="text" name="order_id" class="form-control" required>
+                    <br>
+                    <label for="deposit_amount" class="col-form-label">Deposit Amount</label>
+                    <input type="text" name="deposit_amount" class="form-control" required>
+                    <br>
+                   
+                    <input type="submit" value="Add Supplier" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+
+        <!-- <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-table mr-1"></i> Deposit Confirm Table
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if transactions|length < 1 %}
+                        <p>No deposit transactions found.</p>
+                    {% else %}
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Deposit Amount</th>
+                                    <th> Date</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Deposit Amount</th>
+                                    <th> Date</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                    <tr>
+                                        <td>{{ transaction.order_id }}</td>
+                                        <td>{{ transaction.deposit_amount }}</td>
+                                        <td>{{ transaction.transaction_date }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div> -->
+</main>
+{% endblock %}

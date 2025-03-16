@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Order Detail</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Order Details</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('viewOrder') }}">Orders</a>
+            </li>
+            <li class="breadcrumb-item active">Order #{{ order.order_id }}</li>
+        </ol>
+
+        <!-- Order Detail Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                Order #{{ order.order_id }} - Customer: {{ order.customer.cus_name }}
+            </div>
+            <div class="card-body">
+                <p><strong>Order Date:</strong> {{ order.order_date }}</p>
+                <p><strong>Status:</strong> {{ order.status }}</p>
+                <p><strong>Total Price:</strong> ${{ order.price }}</p>
+            </div>
+        </div>
+
+        <!-- Order Details (Products in the order) -->
+        <div class="card mb-4">
+            <div class="card-header">Products in This Order</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <!-- {% if order.order_details|length < 1 %}
+                        <p>No products in this order.</p>
+                    {% else %} -->
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Price</th>
+                                </tr>
+                            </thead>
+                            <tfoot>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Price</th>
+                                </tr>
+                            </tfoot>
+                            <tbody>
+                                {% for order_detail in order.order_details %}
+                                    <tr>
+                                        <td>{{ order_detail.product.pro_name }}</td>
+                                        <td>{{ order_detail.quantity }}</td>
+                                        <td>${{ order_detail.unit_price }}</td>
+                                        <td>${{ order_detail.quantity * order_detail.unit_price }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons for Actions -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <a href="/update-order/{{ order.order_id }}" class="btn btn-warning">Update Order</a>
+                <a href="/delete-order/{{ order.order_id }}" class="btn btn-danger">Delete Order</a>
+                <a href="/order-detail/{{ order.order_id }}" class="btn btn-danger">View</a>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

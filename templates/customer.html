@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title%}
+<title>Update Customer</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Dashboard</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/customer/">Customer</a></li>
+            
+        </ol>
+        <div class="card mb-4">
+            <div class="card-header">New Customer</div>
+            <div class="card-body">
+                <form action="/customer/" method="POST">
+                    <label for="cus_name" class="col-form-label">Customer Name</label>
+                    <input type="text" name="cus_name" class="form-control" required>
+                    <br>
+                    <label for="cus_contact" class="col-form-label">Contact</label>
+                    <input type="text" name="cus_contact" class="form-control" required>
+                    <br>
+                    <label for="cus_address" class="col-form-label">Address</label>
+                    <input type="text" name="cus_address" class="form-control" required>
+                    <br>
+                    <input type="submit" value="Add Customer" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+
+        
+        <div class="card mb-4">
+            <div class="card-header">Customer</div>
+            <div class="card-body">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Customer ID</th> <!-- Thêm cột cho Customer ID -->
+                            <th>Customer Name</th>
+                            <th>Contact</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>{{ customer.cus_id }}</td> <!-- Hiển thị ID khách hàng -->
+                            <td>{{ customer.cus_name }}</td>
+                            <td>{{ customer.cus_contact }}</td>
+                            <td>{{ customer.cus_address }}</td>
+                            <td>
+                                <a href="/delete-customer/{{ customer.cus_id }}">Delete</a>
+                                <br>
+                                <a href="/update-customer/{{ customer.cus_id }}">Update</a>  
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+ 

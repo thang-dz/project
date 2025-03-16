@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Inventory Check</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Inventory Check</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item active">Inventory Check</li>
+        </ol>
+
+        <!-- Inventory Table -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-table mr-1"></i> Inventory Transactions
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if transactions|length < 1 %}
+                        <p>No transactions found.</p>
+                    {% else %}
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Transaction Type</th>
+                                <th>Product</th>
+                                <th>Material Name</th>
+                                <th>Material Quantity</th>
+                                <th>Reorder Level</th>
+                                <th>Transaction Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tfoot>
+                            <tr>
+                                <th>ID</th>
+                                <th>Transaction Type</th>
+                                <th>Product</th>
+                                <th>Material Name</th>
+                                <th>Material Quantity</th>
+                                <th>Reorder Level</th>
+                                <th>Transaction Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </tfoot>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr>
+                                <!-- Transaction ID -->
+                                <td>{{ transaction.stockTran_id }}</td>
+
+                                <!-- Transaction Type -->
+                                <td>{{ transaction.transaction_type }}</td>
+
+                                <!-- Product Name -->
+                                <td>
+                                    {% if transaction.product %}
+                                        {{ transaction.product.pro_name }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if transaction.material %}
+                                        {{ transaction.material.material_name }}  <!-- Truy xuất material_name từ vật liệu -->
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    {% if transaction.material %}
+                                        {{ transaction.material.quantity_in_stock }}  <!-- Truy xuất quantity_in_stock từ vật liệu -->
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    {% if transaction.material %}
+                                        {{ transaction.material.reorder_level }}  <!-- Truy xuất reorder_level từ vật liệu -->
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Transaction Date -->
+                                <td>{{ transaction.transaction_date }}</td>
+
+                                <!-- Action -->
+                                <td>
+                                    <a href="{{ url_for('delete_transaction', transaction_id=transaction.stockTran_id) }}" class="btn btn-danger">Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

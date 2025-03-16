@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Manufacturing Management</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Manufacturing Management</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Manufacturing Management</li>
+        </ol>
+
+        <!-- Form to select Product -->
+        <div class="card mb-4">
+            <div class="card-header">Select Product</div>
+            <div class="card-body">
+                <form action="/manufacturing-management" method="POST">
+                    <label for="product_id" class="col-form-label">Select Product</label>
+                <select name="product_id" id="product_id" class="form-control" required>
+                    {% for product in products %}
+                        <option value="{{ product.product_id }}">{{ product.pro_name }}</option>
+                    {% endfor %}
+                </select>
+                    <br>
+
+                    <label for="status" class="col-form-label">Current Status</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="In Production">In Production</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Ready for Shipment">Ready for Shipment</option>
+                    </select>
+                    <br>
+
+                    <label for="condition" class="col-form-label">Condition</label>
+                    <select name="condition" id="condition" class="form-control">
+                        <option value="Good">Good</option>
+                        <option value="Defective">Defective</option>
+                    </select>
+                    <br>
+
+                    <div id="defect_reason_div" style="display: none;">
+                        <label for="defect_reason" class="col-form-label">Defect Reason</label>
+                        <input type="text" name="defect_reason" id="defect_reason" class="form-control">
+                    </div>
+                    <br>
+
+                    <input type="submit" value="Update Product" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+
+        <!-- Product Details (Good Products) -->
+        <div class="card mb-4">
+            <div class="card-header">Good Products</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if good_products %}
+                        <table class="table table-bordered" id="dataTableGood" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Status</th>
+                                    <th>Condition</th>
+                                    <th>Quantity</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in good_products %}
+                                    <tr>
+                                        <td>{{ product.pro_name }}</td>
+                                        <td>{{ product.pro_status }}</td>
+                                        <td>{{ product.condition }}</td>
+                                        <td>{{ product.pro_stock }}</td>
+                                        <td>
+                                            <form action="{{ url_for('update_status', product_id=product.product_id) }}" method="POST">
+                                                <select name="status">
+                                                    <option value="In Production" {% if product.pro_status == 'In Production' %}selected{% endif %}>In Production</option>
+                                                    <option value="Completed" {% if product.pro_status == 'Completed' %}selected{% endif %}>Completed</option>
+                                                    <option value="Ready for Shipment" {% if product.pro_status == 'Ready for Shipment' %}selected{% endif %}>Ready for Shipment</option>
+                                                </select>
+                                                <button type="submit">Update Status</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No good products.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Details (Defective Products) -->
+        <div class="card mb-4">
+            <div class="card-header">Defective Products</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if defective_products %}
+                        <table class="table table-bordered" id="dataTableDefective" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Status</th>
+                                    <th>Condition</th>
+                                    <th>Quantity</th>
+                                    <th>Defect reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in defective_products %}
+                                    <tr>
+                                        <td>{{ product.pro_name }}</td>
+                                        <td>{{ product.pro_status }}</td>
+                                        <td>{{ product.condition }}</td>
+                                        <td>{{ product.pro_stock }}</td>
+                                        <td>{{ product.defect_reason }}</td>                                 
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No defective products.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Show defect reason field only if the condition is "Defective"
+    document.getElementById('condition').addEventListener('change', function () {
+        if (this.value == 'Defective') {
+            document.getElementById('defect_reason_div').style.display = 'block';
+        } else {
+            document.getElementById('defect_reason_div').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

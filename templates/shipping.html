@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Shipping Management</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Shipping Management</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Shipping Management</li>
+        </ol>
+
+        <!-- Create Shipping Form -->
+        <div class="card mb-4">
+            <div class="card-header">Create Shipping</div>
+            <div class="card-body">
+                <form action="{{ url_for('shipping') }}" method="POST">
+                    <label for="order_id" class="col-form-label">Order ID:</label>
+                    <input type="text" name="order_id" id="order_id" class="form-control" required>
+                    <br>
+                    <label for="provider" class="col-form-label">Shipping Provider:</label>
+                    <select name="provider" id="provider" class="form-control" required>
+                        <option value="Provider 1">Provider 1</option>
+                        <option value="Provider 2">Provider 2</option>
+                        <option value="Provider 3">Provider 3</option>
+                    </select>
+                    <br>
+                    <label for="tracking_code" class="col-form-label">Tracking Code:</label>
+                    <input type="text" name="tracking_code" id="tracking_code" class="form-control" required>
+                    <br>
+                    <label for="status" class="col-form-label">Status:</label>
+                    <select name="status" id="status" class="form-control" required>
+                        <option value="Pending">Pending</option>
+                        <option value="Shipped">Shipped</option>
+                        <option value="Delivered">Delivered</option>
+                    </select>
+                    <br>
+                    <button type="submit" class="btn btn-primary">Create Shipping</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Shipping Orders List -->
+        <div class="card mb-4">
+            <div class="card-header">Shipping Orders List</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if shippings %}
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Shipping ID</th>
+                                    <th>Order ID</th>
+                                    <th>Provider</th>
+                                    <th>Tracking Code</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for shipping in shippings %}
+                                    <tr>
+                                        <td>{{ shipping.shipping_id }}</td>
+                                        <td>{{ shipping.order.order_id }}</td>
+                                        <td>{{ shipping.provider }}</td>
+                                        <td>{{ shipping.tracking_code }}</td>
+                                        <td>{{ shipping.status }}</td>
+                                        <td>
+                                            <a href="/shippings/{{ shipping.shipping_id }}">View</a><br>
+                                            <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger">Cancel Shipping</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No shipping orders found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

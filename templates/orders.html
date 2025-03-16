@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Order Management</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Orders List</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Orders</li>
+        </ol>
+
+        <div class="card mb-4">
+            <div class="card-header">Orders List</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if orders %}
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th>Shipping Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                    <tr>
+                                        <td>{{ order.order_id }}</td>
+                                        <td>{{ order.customer.cus_name }}</td>
+                                        <td>{{ order.status }}</td>
+                                        <td>
+                                            {% if order.shipping %}
+                                                <p>{{ order.shipping.status }}</p>
+                                            {% else %}
+                                                <p>No shipping info</p>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="/shipping/{{ order.shipping.shipping_id if order.shipping else '' }}">View Shipping</a><br>
+                                            <a href="/create-shipping/{{ order.order_id }}">Create Shipping</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No orders found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

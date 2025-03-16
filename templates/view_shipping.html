@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Shipping Details</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Shipping Details for Order #{{ shipping.order.order_id }}</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/shipping">Shipping</a></li>
+            <li class="breadcrumb-item active">Shipping Details</li>
+        </ol>
+
+        <div class="card mb-4">
+            <div class="card-header">Shipping Information</div>
+            <div class="card-body">
+                <p><strong>Provider:</strong> {{ shipping.provider }}</p>
+                <p><strong>Tracking Code:</strong> {{ shipping.tracking_code }}</p>
+                <p><strong>Status:</strong> {{ shipping.status }}</p>
+            </div>
+        </div>
+
+        <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
+            <button type="submit" class="btn btn-danger">Cancel Shipping</button>
+        </form>
+        
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Update Order</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Update Order</h1>
+
+        <!-- Order Update Form -->
+        <form action="/update-order/{{ order.order_id }}" method="POST">
+            <!-- Customer Selection -->
+            <label for="customer_id" class="col-form-label">Customer</label>
+            <select name="customer_id" id="customer_id" class="form-control" required>
+                {% for customer in customers %}
+                    <option value="{{ customer.cus_id }}" {% if customer.cus_id == order.customer_id %}selected{% endif %}>{{ customer.cus_name }}</option>
+                {% endfor %}
+            </select>
+            <br>
+
+            <!-- Product Selection -->
+            <label for="product_id" class="col-form-label">Product</label>
+            <select name="product_id" id="product_id" class="form-control" required>
+                {% for product in products %}
+                    <option value="{{ product.product_id }}" {% if product.product_id == order.product_id %}selected{% endif %}>{{ product.pro_name }}</option>
+                {% endfor %}
+            </select>
+            <br>
+
+            <!-- Order Date -->
+            <label for="order_date" class="col-form-label">Order Date</label>
+            <input type="datetime-local" name="order_date" id="order_date" class="form-control" value="{{ order.order_date.strftime('%Y-%m-%dT%H:%M') }}" required>
+            <br>
+
+            <!-- Price -->
+            <label for="price" class="col-form-label">Price</label>
+            <input type="number" step="0.01" name="price" id="price" class="form-control" value="{{ order.price }}" required>
+            <br>
+
+            <!-- Status -->
+            <label for="status" class="col-form-label">Status</label>
+            <select name="status" id="status" class="form-control" required>
+                <option value="Pending" {% if order.status == 'Pending' %}selected{% endif %}>Pending</option>
+                <option value="Shipped" {% if order.status == 'Shipped' %}selected{% endif %}>Shipped</option>
+                <option value="Delivered" {% if order.status == 'Delivered' %}selected{% endif %}>Delivered</option>
+            </select>
+            <br>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Update Order</button>
+        </form>
+    </div>
+</main>
+{% endblock %}

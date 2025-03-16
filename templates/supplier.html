@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title%}
+<title>Update Product</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Dashboard</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/supplier/">Supplier</a></li>
+           
+        </ol>
+        <div class="card mb-4">
+            <div class="card-header">New Supplier</div>
+            <div class="card-body">
+                <form action="/supplier/" method="POST">
+                    <label for="sup_name" class="col-form-label">Supplier Name</label>
+                    <input type="text" name="sup_name" class="form-control" required>
+                    <br>
+                    <label for="sup_material_id" class="col-form-label">Material</label>
+                    <select name="sup_material_id" id="sup_material_id" class="form-control">
+                        {% for material in materials %}
+                        <option value="{{ material.material_id }}">{{ material.material_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <label for="sup_contact_info" class="col-form-label">Contact </label>
+                    <input type="text" name="sup_contact_info" class="form-control" required>
+                    <br>
+                    <label for="sup_address" class="col-form-label">Address</label>
+                    <input type="text" name="sup_address" class="form-control" required>
+                    <br>
+                    <input type="submit" value="Add Supplier" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+
+        <!-- Hiển thị danh sách nhà cung cấp -->
+        <div class="card mb-4">
+            <div class="card-header">Suppliers</div>
+            <div class="card-body">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Supplier ID</th> <!-- Hiển thị ID của nhà cung cấp -->
+                            <th>Supplier Name</th>
+                            <th>Material</th>
+                            <th>Contact Info</th>
+                            <th>Address</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                        <tr>
+                            <td>{{ supplier.supplier_id }}</td> <!-- Hiển thị ID nhà cung cấp -->
+                            <td>{{ supplier.sup_name }}</td>
+                            <td>{{ supplier.material.material_name }}</td>
+                            <td>{{ supplier.sup_contact_info }}</td>
+                            <td>{{ supplier.sup_address }}</td>
+                            <td>
+                                <a href="/delete-supplier/{{ supplier.supplier_id }}">Delete</a>
+                                <br>
+                                <a href="/update-supplier/{{ supplier.supplier_id }}">Update</a>  
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+ 

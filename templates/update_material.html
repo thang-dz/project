@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Update Material</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Update Material</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/material/">Material</a></li>
+            <li class="breadcrumb-item active">Update Material</li>
+        </ol>
+
+        <div class="card mb-4">
+            <div class="card-header">Update Material</div>
+            <div class="card-body">
+                <form action="/update-material/{{ material.material_id }}" method="POST">
+                    <!-- Material Name -->
+                    <label for="material_name" class="col-form-label">Material Name</label>
+                    <input type="text" name="material_name" id="material_name" value="{{ material.material_name }}" class="form-control" required>
+                    <br>
+
+                    <!-- Material Description -->
+                    <label for="material_description" class="col-form-label">Material Description</label>
+                    <input type="text" name="material_description" id="material_description" value="{{ material.material_description }}" class="form-control">
+                    <br>
+
+                    <!-- Quantity in Stock -->
+                    <label for="quantity_in_stock" class="col-form-label">Quantity in Stock</label>
+                    <input type="number" name="quantity_in_stock" id="quantity_in_stock" value="{{ material.quantity_in_stock }}" class="form-control" required min="0">
+                    <br>
+
+                    <!-- Reorder Level -->
+                    <label for="reorder_level" class="col-form-label">Reorder Level</label>
+                    <input type="number" name="reorder_level" id="reorder_level" value="{{ material.reorder_level }}" class="form-control" required min="0">
+                    <br>
+
+                    <input id="submit" type="submit" value="Update Material" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
