@@ -13,44 +13,14 @@
             <li class="breadcrumb-item active">Order</li>
         </ol>
 
-        <!-- Order Form -->
-        <div class="card mb-4">
-            <div class="card-header">New Order</div>
-            <div class="card-body">
-                <form method="POST">
-                    <label for="cus_id" class="col-form-label">Customer:</label>
-                    <select name="cus_id" id="cus_id" class="form-control">
-                        {% for customer in customers %}
-                            <option value="{{ customer.cus_id }}">{{ customer.cus_name }}</option>
-                        {% endfor %}
-                    </select>
-                    <br>
-                    <label for="product_ids" class="col-form-label">Products:</label>
-                    <select name="product_ids" id="product_ids" class="form-control">
-                        {% for product in products %}
-                            <option value="{{ product.product_id }}">{{ product.pro_name }}</option>
-                        {% endfor %}
-                    </select>
-                    <br>
-                    <label for="quantities" class="col-form-label"> Quantities:</label>
-                    <input type="text" name="quantities" id="quantities" placeholder="Enter quantities separated by commas" class="form-control">
-                    <br>
-                    <label for="price" class="col-form-label">Price:</label>
-                    <input type="text" name="price" class="form-control" required>
-                    <br>
-                    <label for="status" class="col-form-label">Status:</label>
-                    <select name="status" id="status" class="form-control">
-                        <option value="Pending">Pending</option>
-                        <option value="Shipped">Shipped</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                    <br>
-                    <input type="submit" value="Add Order" class="btn btn-primary">
-                </form>
-                
-            </div>
-        </div>
+        <a  class="btn btn-primary" href="/add-order/">            
+            Add Order
+        </a>
+        <br>
+        <br>
+        <br>
 
+        
         <!-- Orders List -->
         <div class="card mb-4">
             <div class="card-header">Orders List</div>
@@ -79,13 +49,15 @@
                                         <td>{{ order.price }}</td>
                                         <td>{{ order.status }}</td>
                                         <td>
-                                            <a href="/update-order/{{ order.order_id }}">Update</a>
-                                            <br>
-                                            <a href="/delete-order/{{ order.order_id }}">Delete</a>  
-                                            <br>
-                                            <a href="/order-detail/{{ order.order_id }}">View</a>  
-                                            <br>
-                                            
+                                            <div class="card mb-4">
+                                                <div class="card-body">
+                                                    <a href="/update-order/{{ order.order_id }}" class="btn btn-warning">Update Order</a>
+                                                    <br>
+                                                    <a href="/delete-order/{{ order.order_id }}" class="btn btn-danger">Delete Order</a>
+                                                    <br>
+                                                    <a href="/order-detail/{{ order.order_id }}" class="btn btn-warning">View</a> 
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                 {% endfor %}

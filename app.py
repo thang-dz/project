@@ -70,14 +70,16 @@ class Product(db.Model):
     pro_category = db.Column(db.String(255))
     pro_unit_price = db.Column(db.Numeric(10, 2), nullable=False)
     pro_stock = db.Column(db.Integer, default=0)
-    pro_reorder_level = db.Column(db.Integer, default=5)
+   
     pro_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.supplier_id'))  # Sửa lại tên khóa ngoại
     supplier = db.relationship('Supplier', backref='products')
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     condition = db.Column(db.String(50), nullable=True)
     defect_reason = db.Column(db.String(255), nullable=True)
     pro_status = db.Column(db.String(50), default='In Production')
-    
+    pro_material_id = db.Column(db.Integer, db.ForeignKey('material.material_id'))
+    material = db.relationship('Material', backref='products')
+
     def __repr__(self):
         return f'<Product {self.product_id}>'
     
@@ -137,8 +139,8 @@ class PurchaseRequest(db.Model):
         return f'<PurchaseRequest {self.id}>'
 
 
-class StockTransaction(db.Model):
-    __tablename__ = 'stockTransaction'
+class Inventory(db.Model):
+    __tablename__ = 'inventory'
     stockTran_id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.product_id'))
     material_id=db.Column(db.Integer,db.ForeignKey('material.material_id'))
@@ -217,6 +219,32 @@ def index():
     print("Products:", products)  # In dữ liệu ra console để kiểm tra
     return render_template('index.html', products=products)
 
+@app.route('/infor/', methods=["POST", "GET"])
+def infor() :
+    return render_template('information.html')
+
+@app.route('/add-customer/', methods=["POST", "GET"])
+def add_Customer() :
+    return render_template('add-customer.html')
+
+@app.route('/add-material/', methods=["POST", "GET"])
+def add_material() :
+    return render_template('add-material.html')
+
+@app.route('/add-order/', methods=["POST", "GET"])
+def add_order() :
+    return render_template('add-order.html')
+
+@app.route('/add-product/', methods=["POST", "GET"])
+def add_product() :
+    materials=Material.query.all()
+    suppliers=Supplier.query.all()
+    return render_template('add-product.html', materials=materials,suppliers=suppliers)
+
+@app.route('/add-supplier/', methods=["POST", "GET"])
+def add_supplier() :
+    materials=Material.query.all()
+    return render_template('add-supplier.html',materials=materials)
 
 @app.route('/customer/', methods=["POST", "GET"])
 def viewCustomer():
@@ -293,17 +321,8 @@ def view_material():
         try:
             db.session.add(new_material)
             db.session.commit()
-            new_transaction = StockTransaction(
-                material_id=new_material.material_id,
-                transaction_type="Addition",  # Loại giao dịch là nhập kho
-                quantity=quantity_in_stock,  # Số lượng đã thêm vào kho
-                
-            )
-            db.session.add(new_transaction)
-            db.session.commit()
-            
-            flash("Material added successfully!", "success")
-            
+                        
+            flash("Material added successfully!", "success")            
             return redirect(url_for('view_material'))
         except Exception as e:
             db.session.rollback()
@@ -322,7 +341,6 @@ def update_material(material_id):
         material.material_description = request.form.get('material_description', '')
         material.quantity_in_stock = int(request.form.get('quantity_in_stock', 0))
         material.reorder_level = int(request.form.get('reorder_level', 10))
-
         try:
             db.session.commit()
             flash("Material updated successfully!", "success")
@@ -419,6 +437,7 @@ def viewProduct():
         pro_stock = request.form.get("pro_stock", 0)
         pro_reorder_level = request.form.get("pro_reorder_level", 5)
         pro_supplier_id = request.form.get("pro_supplier_id", None)
+        pro_material_id=request.form.get("pro_material_id", None)
 
         # Tạo sản phẩm mới với thông tin nhập vào
         new_product = Product(
@@ -426,8 +445,8 @@ def viewProduct():
             pro_category=pro_category,
             pro_unit_price=pro_unit_price,
             pro_stock=pro_stock,
-            pro_reorder_level=pro_reorder_level,
-            pro_supplier_id=pro_supplier_id
+            pro_supplier_id=pro_supplier_id,
+            pro_material_id=pro_material_id
         )
 
         try:
@@ -435,7 +454,7 @@ def viewProduct():
             db.session.commit()  # Lưu sản phẩm mới vào cơ sở dữ liệu
 
             # Tạo Stock Transaction tự động sau khi thêm sản phẩm
-            new_transaction = StockTransaction(
+            new_transaction = Inventory(
                 product_id=new_product.product_id,
                 transaction_type="Addition",  # Loại giao dịch là nhập kho
                 quantity=pro_stock,  # Số lượng đã thêm vào kho
@@ -467,6 +486,7 @@ def updateProduct(product_id):
         product.pro_stock = request.form.get('pro_stock', product.pro_stock)
         product.pro_reorder_level = request.form.get('pro_reorder_level', product.pro_reorder_level)
         product.pro_supplier_id = request.form.get('pro_supplier_id', product.pro_supplier_id)
+        product.pro_material_id = request.form.get('pro_material_id', product.pro_material_id)
 
         try:
             db.session.commit()
@@ -579,7 +599,7 @@ def updateOrder(order_id):
 
     return render_template("update-order.html", order=order, customers=customers, products=products)
 
-@app.route("/delete-order/<int:order_id>", methods=["POST"])
+@app.route("/delete-order/<int:order_id>", methods=["GET","POST"])
 def deleteOrder(order_id):
     # Get the order that we want to delete
     order_to_delete = Order.query.get_or_404(order_id)
@@ -628,14 +648,14 @@ def deposit_confirm():
 def inventory():
     # Lấy tất cả các sản phẩm, giao dịch kho và vật liệu
     products = Product.query.all()  # Lấy tất cả sản phẩm
-    transactions = StockTransaction.query.all()  # Lấy tất cả giao dịch kho
+    transactions = Inventory.query.all()  # Lấy tất cả giao dịch kho
     materials = Material.query.all()  # Lấy tất cả vật liệu
     return render_template('inventory.html', products=products, transactions=transactions, materials=materials)
 
 
 @app.route("/delete-transaction/<int:transaction_id>", methods=["GET", "POST"])
 def delete_transaction(transaction_id):
-    transaction = StockTransaction.query.get_or_404(transaction_id)
+    transaction = Inventory.query.get_or_404(transaction_id)
     
     try:
         db.session.delete(transaction)  # Xóa giao dịch kho
@@ -658,7 +678,7 @@ def create_purchase_request(material_id):
 
             if quantity_to_order and quantity_to_order > 0:
                 # Lưu yêu cầu mua hàng vào cơ sở dữ liệu
-                new_purchase_request = StockTransaction(
+                new_purchase_request = Inventory(
                     material_id=material_id,
                     transaction_type="Purchase Request",  # Loại giao dịch là yêu cầu mua hàng
                     quantity=quantity_to_order,

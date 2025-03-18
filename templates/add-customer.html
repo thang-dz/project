@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Update Customer</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Dashboard</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/customer/">Customer</a></li>
+        </ol>
+        <div class="card mb-4">
+            <div class="card-header">New Customer</div>
+            <div class="card-body">
+                <form action="/customer/" method="POST">
+                    <div class="form-group">
+                        <label for="cus_name" class="col-form-label">Customer Name <span class="text-danger">*</span></label>
+                        <input type="text" name="cus_name" class="form-control" required>
+                    </div>
+                    <br>
+                    <div class="form-group">
+                        <label for="cus_contact" class="col-form-label">Contact <span class="text-danger">*</span></label>
+                        <input type="text" name="cus_contact" class="form-control" required>
+                    </div>
+                    <br>
+                    <div class="form-group">
+                        <label for="cus_address" class="col-form-label">Address <span class="text-danger">*</span></label>
+                        <input type="text" name="cus_address" class="form-control" required>
+                    </div>
+                    <br>
+                    <input type="submit" value="Add Customer" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

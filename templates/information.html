@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Order Management</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4 text-center">Dashboard</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">New Information</li>
+        </ol>
+
+        <div class="card shadow-lg rounded-3 mb-4">
+            <div class="card-header bg-gradient text-white">
+                <h5 class="mb-0">New Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-center">
+                    <a class="btn btn-custom m-3" href="/customer/">Customer</a>
+                    <a class="btn btn-custom m-3" href="/material/">Material</a>
+                    <a class="btn btn-custom m-3" href="/supplier/">Supplier</a>
+                    <a class="btn btn-custom m-3" href="/products/">Products</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        /* Phông chữ đẹp và dễ đọc */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+        }
+        
+        /* Tiêu đề trang */
+        h1 {
+            color: #333;
+            font-size: 3rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+        
+        /* Phần breadcrumb */
+        .breadcrumb {
+            background-color: #f8f9fa;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .breadcrumb-item a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .breadcrumb-item.active {
+            color: #6c757d;
+        }
+        
+        /* Card header với gradient màu sắc đẹp mắt */
+        .card-header {
+            background: linear-gradient(to right, #007bff, #00c6ff);
+            border-radius: 10px 10px 0 0;
+        }
+        
+        /* Card body */
+        .card-body {
+            background-color: #ffffff;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+        }
+        
+        /* Các nút bấm với hiệu ứng đặc biệt */
+        .btn-custom {
+            background: linear-gradient(to right, #007bff, #00c6ff);
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            border: none;
+            font-weight: 600;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s ease-in-out;
+        }
+        
+        .btn-custom:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(to right, #0056b3, #0095d9);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-custom:focus {
+            outline: none;
+        }
+        
+        /* Tạo hiệu ứng shadow cho card */
+        .card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+        }
+        
+        /* Phần text của card */
+        .card-header h5 {
+            font-size: 1.6rem;
+            font-weight: bold;
+        }
+        
+        /* Các link điều hướng */
+        .card-body a {
+            text-decoration: none;
+        }
+        
+        /* Hiệu ứng chuyển động cho tiêu đề */
+        @keyframes textSlide {
+            0% { transform: translateX(-50px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        
+        h1 {
+            animation: textSlide 1s ease-out forwards;
+        }
+        
+        @media (max-width: 768px) {
+            .btn-custom {
+                font-size: 1rem;
+                padding: 12px 20px;
+            }
+        
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+        </style>
+        
+</main>
+{% endblock %}

@@ -22,34 +22,23 @@
                     {% if transactions|length < 1 %}
                         <p>No transactions found.</p>
                     {% else %}
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <table class="table table-bordered table-sm" id="dataTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Transaction Type</th>
                                 <th>Product</th>
-                                <th>Material Name</th>
+                                <th>Material</th>
                                 <th>Material Quantity</th>
                                 <th>Reorder Level</th>
                                 <th>Transaction Date</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
-                        <tfoot>
-                            <tr>
-                                <th>ID</th>
-                                <th>Transaction Type</th>
-                                <th>Product</th>
-                                <th>Material Name</th>
-                                <th>Material Quantity</th>
-                                <th>Reorder Level</th>
-                                <th>Transaction Date</th>
-                                <th>Action</th>
-                            </tr>
-                        </tfoot>
+                        
                         <tbody>
                             {% for transaction in transactions %}
-                            <tr>
+                            <tr {% if transaction.product.material and transaction.product.material.quantity_in_stock < transaction.product.material.reorder_level %} class="table-warning" {% endif %}>
                                 <!-- Transaction ID -->
                                 <td>{{ transaction.stockTran_id }}</td>
 
@@ -66,35 +55,38 @@
                                 </td>
 
                                 <td>
-                                    {% if transaction.material %}
-                                        {{ transaction.material.material_name }}  <!-- Truy xuất material_name từ vật liệu -->
+                                    {% if transaction.product.material %}
+                                        {{ transaction.product.material.material_name }}  <!-- Truy xuất material_name từ vật liệu -->
                                     {% else %}
                                         N/A
                                     {% endif %}
                                 </td>
-                                
+                                  
                                 <td>
-                                    {% if transaction.material %}
-                                        {{ transaction.material.quantity_in_stock }}  <!-- Truy xuất quantity_in_stock từ vật liệu -->
+                                    {% if transaction.product.material %}
+                                        {{ transaction.product.material.quantity_in_stock }}  <!-- Truy xuất quantity_in_stock từ vật liệu -->
                                     {% else %}
                                         N/A
                                     {% endif %}
                                 </td>
-                                
+                                  
                                 <td>
-                                    {% if transaction.material %}
-                                        {{ transaction.material.reorder_level }}  <!-- Truy xuất reorder_level từ vật liệu -->
+                                    {% if transaction.product.material %}
+                                        {{ transaction.product.material.reorder_level }}  <!-- Truy xuất reorder_level từ vật liệu -->
                                     {% else %}
                                         N/A
                                     {% endif %}
                                 </td>
-                                
+                                  
                                 <!-- Transaction Date -->
                                 <td>{{ transaction.transaction_date }}</td>
 
                                 <!-- Action -->
                                 <td>
                                     <a href="{{ url_for('delete_transaction', transaction_id=transaction.stockTran_id) }}" class="btn btn-danger">Delete</a>
+                                    {% if transaction.product.material and transaction.product.material.quantity_in_stock < transaction.product.material.reorder_level %}                                 
+                                        <a href="{{ url_for('create_purchase_request', material_id=transaction.product.material.material_id) }}" class="btn btn-primary">Create Purchase</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Material Management</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Manage Materials</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Materials</li>
+        </ol>
+
+        <!-- Add Material Form -->
+        <div class="card mb-4">
+            <div class="card-header">Add New Material</div>
+            <div class="card-body">
+                <form action="/material/" method="POST">
+                    <div class="form-group">
+                        <label for="material_name">Material Name <span class="text-danger">*</span></label>
+                        <input type="text" name="material_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="material_description">Material Description</label>
+                        <input type="text" name="material_description" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity_in_stock">Stock Quantity <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity_in_stock" class="form-control" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="reorder_level">Reorder Level <span class="text-danger">*</span></label>
+                        <input type="number" name="reorder_level" class="form-control" required min="1">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Material</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
