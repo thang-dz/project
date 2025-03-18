@@ -72,19 +72,18 @@ class Product(db.Model):
     pro_stock = db.Column(db.Integer, default=0)
    
     pro_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.supplier_id'))  # Sửa lại tên khóa ngoại
-    supplier = db.relationship('Supplier', backref='products')
+    supplier = db.relationship('Supplier', backref='sup_products')
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     condition = db.Column(db.String(50), nullable=True)
     defect_reason = db.Column(db.String(255), nullable=True)
     pro_status = db.Column(db.String(50), default='In Production')
     pro_material_id = db.Column(db.Integer, db.ForeignKey('material.material_id'))
-    material = db.relationship('Material', backref='products')
+    material = db.relationship('Material', backref='mate_products')
 
     def __repr__(self):
         return f'<Product {self.product_id}>'
     
-    def is_incomplete(self):
-        return self.pro_stock < self.pro_reorder_level
+
 
 # # Bảng Đơn hàng
 class Order(db.Model):
@@ -216,8 +215,9 @@ with app.app_context():
 def index():
     # Lấy tất cả các sản phẩm từ cơ sở dữ liệu
     products = Product.query.all()  # Đảm bảo có dữ liệu
-    print("Products:", products)  # In dữ liệu ra console để kiểm tra
-    return render_template('index.html', products=products)
+    materials=Material.query.all()
+    suppliers=Supplier.query.all()
+    return render_template('index.html', products=products, materials=materials, suppliers=suppliers)
 
 @app.route('/infor/', methods=["POST", "GET"])
 def infor() :
@@ -292,16 +292,24 @@ def updateCustomer(cus_id):
 
     return render_template("update-customer.html", customer=customer)
 
-@app.route("/delete-customer/<int:cus_id>")
+@app.route("/delete-customer/<int:cus_id>", methods=["GET", "POST"])
 def deleteCustomer(cus_id):
     customer_to_delete = Customer.query.get_or_404(cus_id)
 
-    try:
-        db.session.delete(customer_to_delete)
-        db.session.commit()
-        return redirect("/customer/")
-    except:
-        return "There was an issue while deleting the customer"
+    if request.method == "POST":
+        try:
+            db.session.delete(customer_to_delete)
+            db.session.commit()
+            flash("Customer deleted successfully!", "success")
+            return redirect("/customer/")
+        except:
+            db.session.rollback()
+            flash("There was an issue while deleting the customer", "danger")
+            return redirect("/customer/")
+
+    return render_template("customer.html", customer=customer_to_delete)
+
+
 @app.route('/material/', methods=["POST", "GET"])
 def view_material():
     if request.method == "POST":
@@ -413,7 +421,7 @@ def updateSupplier(supplier_id):
     materials=Material.query.all()
     return render_template("update-supplier.html", supplier=supplier,materials=materials)
 
-@app.route("/delete-supplier/<int:supplier_id>")
+@app.route("/delete-supplier/<int:supplier_id>", methods=["POST"])
 def deleteSupplier(supplier_id):
     supplier_to_delete = Supplier.query.get_or_404(supplier_id)
 
@@ -427,19 +435,28 @@ def deleteSupplier(supplier_id):
 
 @app.route('/products/', methods=["POST", "GET"])
 def viewProduct():
-    # Lấy danh sách nhà cung cấp
-    suppliers = Supplier.query.all()
+    if request.method == "POST":
+        product_name = request.form.get("product_name")
+        pro_category = request.form.get("pro_category")
+        pro_unit_price = request.form.get("pro_unit_price")
+        pro_stock = request.form.get("pro_stock")
+        pro_supplier_id = request.form.get("pro_supplier_id")
+        pro_material_id = request.form.get("pro_material_id")
 
-    if request.method == "POST" and 'product_name' in request.form:
-        product_name = request.form["product_name"]
-        pro_category = request.form.get("pro_category", "")
-        pro_unit_price = request.form.get("pro_unit_price", 0)
-        pro_stock = request.form.get("pro_stock", 0)
-        pro_reorder_level = request.form.get("pro_reorder_level", 5)
-        pro_supplier_id = request.form.get("pro_supplier_id", None)
-        pro_material_id=request.form.get("pro_material_id", None)
+        # Server-side validation
+        if not product_name or not pro_unit_price or not pro_stock:
+            flash("Please fill in all required fields.", "danger")
+            return redirect(request.referrer)
 
-        # Tạo sản phẩm mới với thông tin nhập vào
+        if not pro_supplier_id or pro_supplier_id == "":
+            flash("Please select a valid supplier.", "danger")
+            return redirect(request.referrer)
+
+        if not pro_material_id or pro_material_id == "":
+            flash("Please select a valid material.", "danger")
+            return redirect(request.referrer)
+
+        # Save product to the database
         new_product = Product(
             pro_name=product_name,
             pro_category=pro_category,
@@ -451,9 +468,8 @@ def viewProduct():
 
         try:
             db.session.add(new_product)
-            db.session.commit()  # Lưu sản phẩm mới vào cơ sở dữ liệu
-
-            # Tạo Stock Transaction tự động sau khi thêm sản phẩm
+            db.session.commit()
+            flash("Product added successfully!", "success")
             new_transaction = Inventory(
                 product_id=new_product.product_id,
                 transaction_type="Addition",  # Loại giao dịch là nhập kho
@@ -461,18 +477,19 @@ def viewProduct():
                 transaction_date=datetime.utcnow()
             )
             db.session.add(new_transaction)
-            db.session.commit()  # Lưu giao dịch kho vào cơ sở dữ liệu
-
-            flash("Product and stock transaction added successfully!", "success")
-            return redirect("/products/")  # Điều hướng lại về trang danh sách sản phẩm
+            db.session.commit()
         except Exception as e:
-            db.session.rollback()  # Nếu có lỗi, rollback lại
+            db.session.rollback()
             flash(f"There was an issue adding the product: {str(e)}", "danger")
-            return redirect("/products/")  # Quay lại trang danh sách sản phẩm
+            return redirect(request.referrer)
 
-    # Nếu là GET request, hoặc không có form POST, hiển thị sản phẩm và danh sách nhà cung cấp
+    # Nếu là GET request, hiển thị danh sách sản phẩm và nhà cung cấp
     products = Product.query.order_by(Product.last_updated.desc()).all()
-    return render_template("products.html", products=products, suppliers=suppliers)
+    suppliers = Supplier.query.all()
+    materials = Material.query.all()  # Ensure materials are passed to template
+
+    return render_template("products.html", products=products, suppliers=suppliers, materials=materials)
+
 
 
 @app.route("/update-product/<int:product_id>", methods=["POST", "GET"])
@@ -498,7 +515,7 @@ def updateProduct(product_id):
     return render_template("update-product.html", product=product, suppliers=suppliers)
 
 
-@app.route("/delete-product/<int:product_id>")
+@app.route("/delete-product/<int:product_id>", methods=["POST"])
 def deleteProduct(product_id):
     product_to_delete = Product.query.get_or_404(product_id)
 

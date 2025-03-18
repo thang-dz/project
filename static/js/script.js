@@ -46,40 +46,8 @@ $(document).ready(function() {
         }
       });
     });
-    $("#submitProduct").on("click", function (e) {
-      e.preventDefault();
-      $.ajax({
-        data: {
-          product_name: $("#product_name").val(),
-        },
-        type: "POST",
-        url: "/dub-products/",
-      }).done(function (data) {
-        if (data.output) {
-          $("#product_form").submit();
-          console.log(data.output);
-        } else {
-          alert("This Name is already used, please choose other one.");
-        }
-      });
-    });
-    $("#submitProduct").on("click", function (e) {
-      e.preventDefault();
-      $.ajax({
-        data: {
-          product_name: $("#product_name").val(),
-        },
-        type: "POST",
-        url: "/dub-products/",
-      }).done(function (data) {
-        if (data.output) {
-          $("#product_form").submit();
-          console.log(data.output);
-        } else {
-          alert("This Name is already used, please choose other one.");
-        }
-      });
-    });
+    
+    
 
     $("#product_form").submit(function (e) {
         if (!$("#product_name").val()) {
