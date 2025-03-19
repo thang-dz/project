@@ -13,14 +13,36 @@
             <li class="breadcrumb-item active">Order</li>
         </ol>
 
-        <a  class="btn btn-primary" href="/add-order/">            
-            Add Order
-        </a>
-        <br>
-        <br>
-        <br>
+        <div class="card mb-4">
+            <div class="card-header">New Order</div>
+            <div class="card-body">
+                <form method="POST">
+                    <label for="cus_id" class="col-form-label">Customer <span class="text-danger">*</span></label>
+                    <select name="cus_id" id="cus_id" class="form-control" required>
+                        {% for customer in customers %}
+                            <option value="{{ customer.cus_id }}">{{ customer.cus_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <label for="product_ids" class="col-form-label">Products <span class="text-danger">*</span></label>
+                    <select name="product_ids" id="product_ids" class="form-control" multiple required>
+                        {% for product in products %}
+                            <option value="{{ product.product_id }}">{{ product.pro_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <label for="quantities" class="col-form-label">Quantities <span class="text-danger">*</span></label>
+                    <input type="text" name="quantities" id="quantities" class="form-control" required>
+                    <br>
+                    <label for="price" class="col-form-label">Price <span class="text-danger">*</span></label>
+                    <input type="text" name="price" class="form-control" required>
+                    <br>
+                    
+                    <input type="submit" value="Add Order" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
 
-        
         <!-- Orders List -->
         <div class="card mb-4">
             <div class="card-header">Orders List</div>
@@ -32,10 +54,10 @@
                                 <tr>
                                     <th>Order ID</th>
                                     <th>Customer</th>
-                                    <th>Product</th>
+                                    <th>Products</th>
                                     <th>Order Date</th>
                                     <th>Price</th>
-                                    <th>Status</th>
+                                    
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -44,20 +66,18 @@
                                     <tr>
                                         <td>{{ order.order_id }}</td>
                                         <td>{{ order.customer.cus_name }}</td>
-                                        <td>{{ order.order_details[0].product.pro_name if order.order_details else 'N/A' }}</td>
+                                        <td>
+                                            {% for order_detail in order.order_details %}
+                                                {{ order_detail.product.pro_name }} (x{{ order_detail.quantity }})<br>
+                                            {% endfor %}
+                                        </td>
                                         <td>{{ order.order_date }}</td>
                                         <td>{{ order.price }}</td>
-                                        <td>{{ order.status }}</td>
+                                       
                                         <td>
-                                            <div class="card mb-4">
-                                                <div class="card-body">
-                                                    <a href="/update-order/{{ order.order_id }}" class="btn btn-warning">Update Order</a>
-                                                    <br>
-                                                    <a href="/delete-order/{{ order.order_id }}" class="btn btn-danger">Delete Order</a>
-                                                    <br>
-                                                    <a href="/order-detail/{{ order.order_id }}" class="btn btn-warning">View</a> 
-                                                </div>
-                                            </div>
+                                            <a href="/order-detail/{{ order.order_id }}" class="btn btn-info">View Details</a>
+                                            <a href="/update-order/{{ order.order_id }}" class="btn btn-warning">Update</a>
+                                            <a href="/delete-order/{{ order.order_id }}" class="btn btn-danger">Delete</a>
                                         </td>
                                     </tr>
                                 {% endfor %}

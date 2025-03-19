@@ -93,7 +93,7 @@ class Order(db.Model):
     cus_id   = db.Column(db.Integer, db.ForeignKey('customer.cus_id'))
     order_date    = db.Column(db.DateTime, default=datetime.utcnow)
     price         = db.Column(db.Numeric(10, 2), nullable=False)
-    status        = db.Column(db.String(50), default='Pending')
+    
     customer      = db.relationship('Customer', backref='orders')
 
     def __repr__(self):
@@ -534,13 +534,13 @@ def viewOrder():
         # Handle form submission to add a new order
         cus_id = request.form['cus_id']
         price = request.form['price']
-        status = request.form['status']
+       
 
         # Create a new order
         new_order = Order(
             cus_id=cus_id,
             price=price,
-            status=status
+           
         )
 
         # Add the order to the session and commit
@@ -569,8 +569,9 @@ def viewOrder():
     orders = Order.query.all()  # Fetch all orders from the database
     customers = Customer.query.all()  # Fetch all customers to populate the customer dropdown
     products = Product.query.all()  # Fetch all products to populate the product dropdown
+    order_details=OrderDetail.query.all()
 
-    return render_template("order.html", orders=orders, customers=customers, products=products)
+    return render_template("order.html", orders=orders, customers=customers, products=products, order_detail=order_details)
 
 
 @app.route("/update-order/<int:order_id>", methods=["POST", "GET"])
@@ -580,41 +581,38 @@ def updateOrder(order_id):
     products = Product.query.all()
 
     if request.method == "POST":
-        order.customer_id = request.form['customer_id']
-        order.status = request.form['status']
-        
+        order.customer_id = request.form['cus_id']
+       
         # Cập nhật ngày đơn hàng
         order_date_str = request.form['order_date']
         order.order_date = datetime.strptime(order_date_str, '%Y-%m-%dT%H:%M')
 
         # Lấy danh sách chi tiết đơn hàng (sản phẩm và số lượng)
-        product_ids = request.form.getlist('product_ids')  # Danh sách product_ids
-        quantities = request.form.getlist('quantities')  # Danh sách số lượng cho mỗi sản phẩm
+        product_ids = request.form.getlist('product_ids')
+        quantities = request.form.getlist('quantities')
 
-        # Kiểm tra tồn kho cho mỗi sản phẩm trong đơn hàng
         for product_id, quantity in zip(product_ids, quantities):
             product = Product.query.get(product_id)
-            if product.pro_stock < int(quantity):  # Nếu không đủ tồn kho
+            if product.pro_stock < int(quantity):
                 flash(f"Not enough stock for product: {product.pro_name}. Available stock: {product.pro_stock}", "danger")
-                db.session.rollback()  # Rollback giao dịch
+                db.session.rollback()
                 return redirect(url_for('viewOrder'))
 
-            # Cập nhật số lượng tồn kho sau khi đơn hàng được xác nhận
             product.pro_stock -= int(quantity)
-            # Cập nhật chi tiết đơn hàng
             order_detail = OrderDetail.query.filter_by(order_id=order.order_id, product_id=product_id).first()
             order_detail.quantity = int(quantity)
             order_detail.unit_price = product.pro_unit_price
 
         try:
-            db.session.commit()  # Lưu cập nhật vào cơ sở dữ liệu
+            db.session.commit()
             flash("Order updated successfully!", "success")
-            return redirect("/order/")  # Quay lại trang danh sách đơn hàng
+            return redirect("/order/")
         except Exception as e:
-            db.session.rollback()  # Rollback nếu có lỗi
+            db.session.rollback()
             flash(f"There was an issue while updating the order: {str(e)}", "danger")
 
     return render_template("update-order.html", order=order, customers=customers, products=products)
+
 
 @app.route("/delete-order/<int:order_id>", methods=["GET","POST"])
 def deleteOrder(order_id):
