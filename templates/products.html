@@ -1,92 +1,50 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>Inventory Management App</title>
+<title>Product List</title>
 {% endblock %}
 
 {% block content %}
 <main>
     <div class="container-fluid">
-        <h1 class="mt-4">Dashboard</h1>
+        <h1 class="mt-4">Product List</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item active">Products</li>
+            <li class="breadcrumb-item active">Product List</li>
         </ol>
-        
         <a class="btn btn-primary" href="/add-product/">            
             Add Product
         </a>
-        <br><br><br>
-
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-table mr-1"></i>
-                Products Table
-            </div>
+            <div class="card-header">Products</div>
             <div class="card-body">
-                <div class="table-responsive">
-                    {% if products|length < 1 %}
-                        <h4>There are no Products, add one above</h4>
-                    {% else %}
-                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Product ID</th>
-                                    <th>Product Name</th>
-                                    <th>Category</th>
-                                    <th>Price</th>
-                                    <th>Stock</th>
-                                    <th>Supplier</th>
-                                    <th>Material</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in products %}
-                                <tr>
-                                    <td>{{ product.product_id }}</td>
-                                    <td>{{ product.pro_name }}</td>
-                                    <td>{{ product.pro_category }}</td>
-                                    <td>{{ product.pro_unit_price }}</td>
-                                    <td>{{ product.pro_stock }}</td>
-                                    <td>
-                                        {% if product.supplier %}
-                                            {{ product.supplier.sup_name }}
-                                        {% else %}
-                                            <span class="text-danger">No Supplier</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if product.material %}
-                                            {{ product.material.material_name }}
-                                        {% else %}
-                                            <span class="text-danger">No Material</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ product.last_updated.date() }}</td>
-                                    <td>
-                                        <form action="/delete-product/{{ product.product_id }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirmDelete()">Delete</button>
-                                        </form>
-                                        <a class="btn btn-primary" href="/update-product/{{ product.product_id }}">Update</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% endif %}
-                </div>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product ID</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.product_id }}</td>
+                            <td>{{ product.product_name }}</td>
+                            <td>{{ product.category }}</td>
+                            
+                            <td>
+                                <a href="{{ url_for('update_product', product_id=product.product_id) }}" class="btn btn-info">Edit</a> 
+                                <a href="{{ url_for('delete_product', product_id=product.product_id) }}" class="btn btn-danger">Delete</a>
+                               
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </main>
-
-<!-- JavaScript Xác nhận xóa -->
-<script>
-    function confirmDelete() {
-        return confirm("Are you sure you want to delete this product?");
-    }
-</script>
-
 {% endblock %}

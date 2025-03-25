@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Add New Order</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Add New Order</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Add Order</li>
+        </ol>
+
+        <div class="card mb-4">
+            <div class="card-header">New Order</div>
+            <div class="card-body">
+                <form method="POST" onsubmit="updateTotalPrice()">
+                    <!-- Customer Information -->
+                    <label for="cus_name" class="col-form-label">Customer Name <span class="text-danger">*</span></label>
+                    <input type="text" name="cus_name" id="cus_name" class="form-control" required>
+                    <br>
+
+                    <label for="cus_contact" class="col-form-label">Customer Contact</label>
+                    <input type="text" name="cus_contact" id="cus_contact" class="form-control">
+                    <br>
+
+                    <label for="cus_address" class="col-form-label">Customer Address</label>
+                    <input type="text" name="cus_address" id="cus_address" class="form-control">
+                    <br>
+
+                    <!-- Product Information -->
+                    <label for="product_name" class="col-form-label">Product Name <span class="text-danger">*</span></label>
+                    <input type="text" name="product_name" id="product_name" class="form-control" placeholder="Product Name" required>
+                    <br>
+
+                    <label for="product_price" class="col-form-label">Product Price <span class="text-danger">*</span></label>
+                    <input type="number" name="product_price" id="product_price" class="form-control" placeholder="Product Price" required oninput="calculateTotalPrice()">
+                    <br>
+
+                    <label for="quantity" class="col-form-label">Quantity <span class="text-danger">*</span></label>
+                    <input type="number" name="quantity" id="quantity" class="form-control" required oninput="calculateTotalPrice()">
+                    <br>
+
+                    <!-- Import ID -->
+                    <label for="import_id" class="col-form-label">Import ID <span class="text-danger">*</span></label>
+                    <select name="import_id" id="import_id" class="form-control" required>
+                        {% for import_item in imports %}
+                            <option value="{{ import_item.import_id }}">{{ import_item.material_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+
+                    <!-- Order Information -->
+                    <label for="order_date">Order Date</label>
+                    <input type="datetime-local" name="order_date" class="form-control" required>
+                    <br>
+
+                    <label for="price" class="col-form-label">Total Price <span class="text-danger">*</span></label>
+                    <input type="number" name="price" id="price" class="form-control" required readonly>
+                    <br>
+
+                    <input type="submit" value="Add Order" class="btn btn-primary">
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Function to calculate the total price for the product and the total order price
+    function calculateTotalPrice() {
+        let productPrice = parseFloat(document.getElementById('product_price').value) || 0;
+        let quantity = parseInt(document.getElementById('quantity').value) || 0;
+        let totalPrice = productPrice * quantity;
+        document.getElementById('price').value = totalPrice.toFixed(2); // Set total price for the order
+    }
+
+    // Ensure total price is calculated before form submission
+    function updateTotalPrice() {
+        calculateTotalPrice();
+    }
+</script>
+
+{% endblock %}

@@ -1,101 +1,77 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    <title>Inventory Check</title>
+<title>Inventory</title>
 {% endblock %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    <div class="alert alert-dismissible">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
 <main>
     <div class="container-fluid">
-        <h1 class="mt-4">Inventory Check</h1>
+        <h1 class="mt-4">Dashboard</h1>
         <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item active">Inventory Check</li>
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/inventory/">Inventory</a></li>
         </ol>
-
-        <!-- Inventory Table -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-table mr-1"></i> Inventory Transactions
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    {% if transactions|length < 1 %}
-                        <p>No transactions found.</p>
-                    {% else %}
-                    <table class="table table-bordered table-sm" id="dataTable" width="100%" cellspacing="0">
+      
+        <!-- Inventory List -->
+        <div class="container-fluid">
+            
+            <div class="card mb-4">
+                <div class="card-header">Inventory List</div>
+                <div class="card-body">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Transaction Type</th>
-                                <th>Product</th>
-                                <th>Material</th>
+                                <th>Product Name</th>
+                                <th>Material Name</th>  <!-- Display Material Name -->
+                                <th>Product Quantity</th>
                                 <th>Material Quantity</th>
-                                <th>Reorder Level</th>
+                                <th>Transaction Type</th>
                                 <th>Transaction Date</th>
-                                <th>Action</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
-                        
                         <tbody>
-                            {% for transaction in transactions %}
-                            <tr {% if transaction.product.material and transaction.product.material.quantity_in_stock < transaction.product.material.reorder_level %} class="table-warning" {% endif %}>
-                                <!-- Transaction ID -->
-                                <td>{{ transaction.stockTran_id }}</td>
-
-                                <!-- Transaction Type -->
-                                <td>{{ transaction.transaction_type }}</td>
-
-                                <!-- Product Name -->
-                                <td>
-                                    {% if transaction.product %}
-                                        {{ transaction.product.pro_name }}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </td>
-
-                                <td>
-                                    {% if transaction.product.material %}
-                                        {{ transaction.product.material.material_name }}  <!-- Truy xuất material_name từ vật liệu -->
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </td>
-                                  
-                                <td>
-                                    {% if transaction.product.material %}
-                                        {{ transaction.product.material.quantity_in_stock }}  <!-- Truy xuất quantity_in_stock từ vật liệu -->
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </td>
-                                  
-                                <td>
-                                    {% if transaction.product.material %}
-                                        {{ transaction.product.material.reorder_level }}  <!-- Truy xuất reorder_level từ vật liệu -->
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </td>
-                                  
-                                <!-- Transaction Date -->
-                                <td>{{ transaction.transaction_date }}</td>
-
-                                <!-- Action -->
-                                <td>
-                                    <a href="{{ url_for('delete_transaction', transaction_id=transaction.stockTran_id) }}" class="btn btn-danger">Delete</a>
-                                    {% if transaction.product.material and transaction.product.material.quantity_in_stock < transaction.product.material.reorder_level %}                                 
-                                        <a href="{{ url_for('create_purchase_request', material_id=transaction.product.material.material_id) }}" class="btn btn-primary">Create Purchase</a>
-                                    {% endif %}
-                                </td>
-                            </tr>
+                            {% for item in inventory %}
+                                <tr>
+                                    <td>{{ item.product_name }}</td>
+                                    <td>{{ item.import_data.material_name }}</td> <!-- Access Material Name from Import -->
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{item.import_data.quantity_in_stock}}</td>
+                                    <td>{{ item.transaction_type }}</td>
+                                    <td>{{ item.transaction_date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                                    <td>
+                                        <form action="{{ url_for('delete_inventory', inventory_id=item.stockTran_id) }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this inventory item?')">Delete</button>
+                                        </form>
+                                        {% if item.import_data and item.import_data.quantity_in_stock < item.import_data.reorder_level %}
+                                            <a href="{{ url_for('create_purchase_request', import_id=item.import_data.import_id) }}" class="btn btn-primary">Create Purchase</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </main>
+
+<!-- JavaScript for delete confirmation -->
+<script>
+    function confirmDelete() {
+        return confirm("Are you sure you want to delete this supplier?");
+    }
+</script>
+
 {% endblock %}

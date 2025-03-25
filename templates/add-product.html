@@ -1,79 +1,35 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>Inventory Management App</title>
+<title>Add New Product</title>
 {% endblock %}
 
 {% block content %}
 <main>
     <div class="container-fluid">
-        <h1 class="mt-4">Dashboard</h1>
+        <h1 class="mt-4">Add New Product</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item active">Products</li>
+            <li class="breadcrumb-item active">Add Product</li>
         </ol>
-        
-        <!-- Form Thêm sản phẩm -->
+
         <div class="card mb-4">
             <div class="card-header">New Product</div>
             <div class="card-body">
-                <form action="/products/" method="POST" id="product_form" onsubmit="return validateForm()">
+                <form action="/add-product/" method="POST">
                     <label for="product_name" class="col-form-label">Product Name <span class="text-danger">*</span></label>
-                    <input type="text" name="product_name" id="product_name" required class="form-control">
-                    <br>
-                    <label for="pro_category" class="col-form-label">Category</label>
-                    <input type="text" name="pro_category" id="pro_category" class="form-control">
-                    <br>
-                    <label for="pro_unit_price" class="col-form-label">Unit Price <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" name="pro_unit_price" id="pro_unit_price" required class="form-control">
-                    <br>
-                    <label for="pro_stock" class="col-form-label">Stock <span class="text-danger">*</span></label>
-                    <input type="number" name="pro_stock" id="pro_stock" required class="form-control">
-                    <br>
-                    
-                    <label for="pro_supplier_id" class="col-form-label">Supplier <span class="text-danger">*</span></label>
-                    <select name="pro_supplier_id" id="pro_supplier_id" class="form-control" required>
-                        <option value="">-- Select a Supplier --</option>
-                        {% for supplier in suppliers %}
-                        <option value="{{ supplier.supplier_id }}">{{ supplier.sup_name }}</option>
-                        {% endfor %}
-                    </select>
+                    <input type="text" name="product_name" class="form-control" required>
                     <br>
 
-                    <label for="pro_material_id" class="col-form-label">Material <span class="text-danger">*</span></label>
-                    <select name="pro_material_id" id="pro_material_id" class="form-control" required>
-                        <option value="">-- Select a Material --</option>
-                        {% for material in materials %}
-                        <option value="{{ material.material_id }}">{{ material.material_name }}</option>
-                        {% endfor %}
-                    </select>
+                    <label for="category" class="col-form-label">Category <span class="text-danger">*</span></label>
+                    <input type="text" name="category" class="form-control" required>
                     <br>
-                    
-                    <input type="submit" id="submitProduct" value="Add Product" class="btn btn-primary">
+
+
+                    <input type="submit" value="Add Product" class="btn btn-primary">
                 </form>
             </div>
         </div>
     </div>
 </main>
-
-<!-- JavaScript Validation -->
-<script>
-    function validateForm() {
-        let supplier = document.getElementById("pro_supplier_id").value;
-        let material = document.getElementById("pro_material_id").value;
-
-        if (supplier === "" || supplier === "null") {
-            alert("Please select a valid supplier.");
-            return false;  // Prevent form submission
-        }
-        
-        if (material === "" || material === "null") {
-            alert("Please select a valid material.");
-            return false;
-        }
-
-        return true; // Allow form submission
-    }
-</script>
-
 {% endblock %}
