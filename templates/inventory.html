@@ -46,7 +46,14 @@
                                     <td>{{ item.product_name }}</td>
                                     <td>{{ item.import_data.material_name }}</td> <!-- Access Material Name from Import -->
                                     <td>{{ item.quantity }}</td>
-                                    <td>{{item.import_data.quantity_in_stock}}</td>
+                                    <td>                                        
+                                        {% if item.import_data.quantity_in_stock < item.import_data.reorder_level %}
+                                            <span class="text-danger">Stock data unavailable. Please update inventory records.</span>
+                                        {% else %}
+                                            {{ item.import_data.quantity_in_stock }} <!-- Display available stock -->
+                                        {% endif %}
+                                    
+                                    </td>
                                     <td>{{ item.transaction_type }}</td>
                                     <td>{{ item.transaction_date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
                                     <td>

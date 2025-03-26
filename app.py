@@ -4,6 +4,7 @@ from flask import Flask, jsonify, render_template, request, session, url_for, re
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 from flask_wtf import FlaskForm
+import pytz
 from wtforms import StringField, SubmitField, IntegerField, DecimalField, PasswordField
 from wtforms.validators import DataRequired, Email
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,6 +31,12 @@ db = SQLAlchemy(app)
 #     name     = db.Column(db.String(100), nullable=False)
 
 
+# Vietnam Time (UTC +7)
+VIETNAM_TZ = pytz.timezone("Asia/Ho_Chi_Minh")
+
+def vietnam_now():
+    """Return the current time in Vietnam timezone."""
+    return datetime.now(VIETNAM_TZ)
 
 class Import(db.Model):
     __tablename__ = 'imports'
@@ -55,7 +62,7 @@ class Order(db.Model):
     cus_name = db.Column(db.String(255), nullable=False)  # Customer Name
     cus_contact = db.Column(db.String(255), nullable=False)  # Customer Contact
     cus_address = db.Column(db.String(255), nullable=False)  # Customer Address
-    order_date = db.Column(db.DateTime, default=datetime.utcnow)
+    order_date = db.Column(db.DateTime, default=vietnam_now)
     price = db.Column(db.Numeric(10, 2), nullable=False)
 
     order_details = db.relationship('OrderDetail', backref='order_relation', lazy=True)
@@ -69,7 +76,7 @@ class Inventory(db.Model):
     product_name = db.Column(db.String(255), nullable=False)  # Name of the product
     quantity = db.Column(db.Integer, nullable=False, default=0)  # Quantity of the product in stock
     transaction_type = db.Column(db.String(50), nullable=False)  # "Addition" or "Removal"
-    transaction_date = db.Column(db.DateTime, default=datetime.utcnow)  # Date of transaction
+    transaction_date = db.Column(db.DateTime, default=vietnam_now)  # Date of transaction
 
     import_id = db.Column(db.Integer, db.ForeignKey('imports.import_id'), nullable=False)  # Foreign Key to Import (raw material)
 
@@ -84,7 +91,7 @@ class DepositConfirm(db.Model):
     id = db.Column(db.Integer, primary_key=True)  # Khoá chính của bảng
     order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'), nullable=False)  # Mã đơn hàng (khóa ngoại)
     deposit_amount = db.Column(db.Numeric(10, 2), nullable=False)  # Số tiền gửi
-    transaction_date = db.Column(db.DateTime, default=datetime.utcnow)  # Ngày giao dịch
+    transaction_date = db.Column(db.DateTime, default=vietnam_now)  # Ngày giao dịch
 
     order = db.relationship('Order', backref='deposit_confirm')  # Quan hệ với bảng Order
 
@@ -125,7 +132,7 @@ class ProductBatch(db.Model):
     manufacturing_status = db.Column(db.String(50), default='In Production')
     product_condition = db.Column(db.String(50), nullable=True)
     defect_reason = db.Column(db.String(255), nullable=True)
-    transaction_date = db.Column(db.DateTime, default=datetime.utcnow)
+    transaction_date = db.Column(db.DateTime, default=vietnam_now)
 
     def __repr__(self):
         return f"<Batch #{self.batch_id} - OrderDetail #{self.order_detail_id}>"
@@ -142,7 +149,7 @@ class Shipping(db.Model):
     provider = db.Column(db.String(255), nullable=False)
     shipping_cost = db.Column(db.Numeric(10, 2), nullable=False)
     shipping_status = db.Column(db.String(50), default='Pending')  # Status: Pending, Shipped, Delivered
-    shipment_time = db.Column(db.DateTime, default=datetime.utcnow)
+    shipment_time = db.Column(db.DateTime, default=vietnam_now)
     order = db.relationship('Order', backref='shipping_details')
 
     def __repr__(self):
@@ -157,38 +164,13 @@ class PurchaseRequest(db.Model):
     id                 = db.Column(db.Integer, primary_key=True)
     import_id           = db.Column(db.Integer, db.ForeignKey('imports.import_id'))
     quantity_requested = db.Column(db.Integer, nullable=False)
-    transaction_date   = db.Column(db.DateTime, default=datetime.utcnow)
+    transaction_date   = db.Column(db.DateTime, default=vietnam_now)
 
     import_request = db.relationship('Import', backref='order_request', lazy=True)
 
     def __repr__(self):
         return f'<PurchaseRequest {self.id}>'
 
-
-# class Payment(db.Model):
-
-#     __tablename__ = 'payment'
-#     payment_id    = db.Column(db.Integer, primary_key=True)
-#     order_id      = db.Column(db.Integer, db.ForeignKey('order.order_id'))
-#     amount        = db.Column(db.Numeric(10, 2), nullable=False)
-#     status        = db.Column(db.String(50), default='Pending')
-#     payment_date  = db.Column(db.DateTime, default=datetime.utcnow)
-#     order         = db.relationship('Order', backref='payments')
-
-#     def __repr__(self):
-#         return '<Payment %r>' % self.payment_id
-# class Shipping(db.Model):
-
-    # __tablename__ = 'shipping'
-    # shipping_id   = db.Column(db.Integer, primary_key=True)
-    # order_id      = db.Column(db.Integer, db.ForeignKey('order.order_id'))
-    # provider      = db.Column(db.String(255))
-    # tracking_code = db.Column(db.String(255), unique=True)
-    # status        = db.Column(db.String(50), default='Pending')
-    # order         = db.relationship('Order', backref='shipping')
-
-    # def __repr__(self):
-    #     return '<Shipping %r>' % self.shipping_id
 
 # # Form Đăng nhập
 # class LoginForm(FlaskForm):
@@ -386,9 +368,9 @@ def add_order():
         # Handle order date parsing
         order_date_str = request.form.get("order_date")
         if not order_date_str:
-            order_date = datetime.utcnow()
+            order_date = vietnam_now()
         else:
-            order_date = datetime.strptime(order_date_str, '%Y-%m-%dT%H:%M')
+            order_date = vietnam_now.strptime(order_date_str, '%Y-%m-%dT%H:%M')
 
         # Create new order record
         new_order = Order(
@@ -441,7 +423,7 @@ def add_order():
             db.session.add(new_inventory)
 
         db.session.commit()
-        flash("Order added successfully and products moved to inventory!", "success")
+        flash("Order added successfully ", "success")
         return redirect("/order/")
 
     # Fetch imports to populate select options
@@ -731,11 +713,23 @@ def manufacturing_management():
     return render_template('manufacturing_management.html')
 
 
+def generate_tracking_code():
+    length = 10
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
 @app.route('/create-shipping-order/<int:order_id>', methods=["GET", "POST"])
 def create_shipping_order(order_id):
     # Fetch the order from the database
     order = Order.query.get_or_404(order_id)
     
+    # Check if the order has already been shipped or has a shipping status other than "Pending"
+    # Access the first shipping record if it exists
+    if order.shipping_details:
+        shipping_record = order.shipping_details[0]  # Get the first shipping record
+        if shipping_record.shipping_status != "Pending":
+            flash("This order has already been shipped or is not in pending status. It cannot be shipped again.", "danger")
+            return redirect(url_for('view_shipping', shipping_id=shipping_record.shipping_id))
+
     if request.method == "POST":
         provider = request.form['provider']
         shipping_cost = request.form.get('shipping_cost', type=float)
@@ -745,11 +739,18 @@ def create_shipping_order(order_id):
             flash("Shipping cost must be a positive value.", "danger")
             return redirect(url_for('create_shipping_order', order_id=order_id))
 
+        # Generate a unique tracking code
+        tracking_code = generate_tracking_code()
+
+        # Check if the tracking code already exists, if it does, regenerate it
+        while Shipping.query.filter_by(tracking_code=tracking_code).first():
+            tracking_code = generate_tracking_code()
+
         # Create shipping order
         shipping = Shipping(
             order_id=order_id,
             provider=provider,
-            tracking_code="GENERATED_CODE",  # Replace with actual tracking code logic
+            tracking_code=tracking_code,
             shipping_cost=shipping_cost,
             shipping_status="Pending"
         )
@@ -757,7 +758,7 @@ def create_shipping_order(order_id):
         try:
             db.session.add(shipping)
             db.session.commit()
-            flash(f"Shipping order created for Order #{order_id}.", 'success')
+            flash(f"Shipping order created for Order #{order_id} with tracking code {tracking_code}.", 'success')
             return redirect(url_for('view_shipping', shipping_id=shipping.shipping_id))
         except Exception as e:
             db.session.rollback()
@@ -807,10 +808,35 @@ def shipping_list():
 
 @app.route('/shipping/<int:shipping_id>', methods=["GET"])
 def view_shipping(shipping_id):
+    # Fetch the shipping object using the shipping_id
     shipping = Shipping.query.get_or_404(shipping_id)
+
+    # If the shipping record exists, pass it to the template
     return render_template('view_shipping.html', shipping=shipping)
 
 
+
+@app.route('/cancel-shipping/<int:shipping_id>', methods=["POST"])
+def cancel_shipping(shipping_id):
+    # Fetch the shipping order from the database
+    shipping = Shipping.query.get_or_404(shipping_id)
+
+    # Check if the shipping order is in "Pending" status
+    if shipping.shipping_status != "Pending":
+        flash("This shipping order cannot be canceled because it is either already shipped or canceled.", "danger")
+        return redirect(url_for('view_shipping', shipping_id=shipping_id))
+
+    try:
+        # Update the shipping status to "Cancelled"
+        shipping.shipping_status = "Cancelled"
+        db.session.commit()
+        flash("Shipping order has been successfully canceled.", "success")
+    except Exception as e:
+        db.session.rollback()  # Rollback in case of error
+        flash(f"Error canceling shipping: {str(e)}", "danger")
+
+    # Redirect to the shipping details page
+    return redirect(url_for('view_shipping', shipping_id=shipping_id))
 
 
 

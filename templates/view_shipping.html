@@ -18,23 +18,33 @@
         <div class="card mb-4">
             <div class="card-header">Shipping Information</div>
             <div class="card-body">
-                <p><strong>Provider:</strong> {{ shipping.provider }}</p>
-                <p><strong>Status:</strong> {{ shipping.shipping_status }}</p>
-                <p><strong>Tracking Code:</strong> 
-                    <a href="https://tracking.example.com/{{ shipping.tracking_code }}" target="_blank">{{ shipping.tracking_code }}</a>
-                </p>
-                <p><strong>Shipping Cost:</strong> {{ shipping.shipping_cost | format_price }}</p>
+                {% if shipping.shipping_status %}
+                    <p><strong>Tracking Code:</strong> {{ shipping.tracking_code }}</p>
+                    <p><strong>Provider:</strong> {{ shipping.provider }}</p>
+                    <p><strong>Shipping Cost:</strong> ${{ shipping.shipping_cost | format_price }}</p>
+                    <p><strong>Status:</strong> {{ shipping.shipping_status }}</p>
+                    <p><strong>Tracking Code Link:</strong> 
+                        <a href="https://tracking.example.com/{{ shipping.tracking_code }}" target="_blank">{{ shipping.tracking_code }}</a>
+                    </p>
+                {% else %}
+                    <p>No shipping record found for this order.</p>
+                {% endif %}
             </div>
         </div>
 
-        {% if shipping.shipping_status != 'Paid' %}
-            <div class="card mb-4">
-                <div class="card-header">Confirm Payment</div>
-                <div class="card-body">
-                    <a href="{{ url_for('confirm_shipping_payment', shipping_id=shipping.shipping_id) }}" class="btn btn-primary">Confirm Payment</a>
-                </div>
-            </div>
+        {% if shipping.shipping_status == "Pending" %}
+            <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this shipping?')">Cancel Shipping</button>
+            </form>
+        {% elif shipping.shipping_status == "Shipped" %}
+            <p>This order has already been shipped and cannot be canceled.</p>
+
+        {% else %}
+            <p>Shipping has been canceled or completed. No further actions can be taken.</p>
         {% endif %}
+
+        <a href="/shipping-list/" class="btn btn-info">Back</a>
+
     </div>
 </main>
 {% endblock %}
