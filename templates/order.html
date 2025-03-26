@@ -23,7 +23,7 @@
         </ol>
         <a href="/add-order/" class="btn btn-primary">Add Order</a>
         <a href="/deposit-confirm/" class="btn btn-primary">Deposit Confirm</a>
-        <br>
+       
         <br>
         <div class="card mb-4">
             <div class="card-header">Orders List</div>
@@ -61,10 +61,13 @@
                                         <td>{{ order.price | format_price }}</td> <!-- Apply formatting filter -->
                                         <td>
                                             <a href="/order-detail/{{ order.order_id }}" class="btn btn-info">View Details</a>
-                                            <a href="/update-order/{{ order.order_id }}" class="btn btn-warning">Update</a>
+                                           
                                             <form action="{{ url_for('deleteOrder', order_id=order.order_id) }}" method="POST" style="display:inline;">
                                                 <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this inventory item?')">Delete</button>
                                             </form>
+                                            
+                                            <a href="/create-shipping-order/{{ order.order_id }}" class="btn btn-primary">Create Ship</a>
+                                            <br>
                                         </td>
                                     </tr>
                                 {% endfor %}

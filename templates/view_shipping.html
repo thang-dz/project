@@ -1,33 +1,40 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    <title>Shipping Details</title>
+<title>Shipping Details</title>
 {% endblock %}
 
 {% block content %}
 <main>
     <div class="container-fluid">
-        <h1 class="mt-4">Shipping Details for Order #{{ shipping.order.order_id }}</h1>
+        <h1 class="mt-4">Shipping Details for Order #{{ shipping.order_id }}</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/shipping">Shipping</a></li>
+            <li class="breadcrumb-item"><a href="/shipping-list">Shipping List</a></li>
             <li class="breadcrumb-item active">Shipping Details</li>
         </ol>
 
+        <!-- Shipping Order Details -->
         <div class="card mb-4">
             <div class="card-header">Shipping Information</div>
             <div class="card-body">
                 <p><strong>Provider:</strong> {{ shipping.provider }}</p>
-                <p><strong>Tracking Code:</strong> {{ shipping.tracking_code }}</p>
-                <p><strong>Status:</strong> {{ shipping.status }}</p>
+                <p><strong>Status:</strong> {{ shipping.shipping_status }}</p>
+                <p><strong>Tracking Code:</strong> 
+                    <a href="https://tracking.example.com/{{ shipping.tracking_code }}" target="_blank">{{ shipping.tracking_code }}</a>
+                </p>
+                <p><strong>Shipping Cost:</strong> {{ shipping.shipping_cost | format_price }}</p>
             </div>
         </div>
 
-        <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
-            <button type="submit" class="btn btn-danger">Cancel Shipping</button>
-        </form>
-        <a href="/shipping/" class="btn btn-primary">Back</a><br>
-        
+        {% if shipping.shipping_status != 'Paid' %}
+            <div class="card mb-4">
+                <div class="card-header">Confirm Payment</div>
+                <div class="card-body">
+                    <a href="{{ url_for('confirm_shipping_payment', shipping_id=shipping.shipping_id) }}" class="btn btn-primary">Confirm Payment</a>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </main>
 {% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Add Product Batch</title>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    <div class="alert alert-dismissible">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
+
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Add New Product Batch</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/add-product-batch/">Add Product Batch</a></li>
+        </ol>
+
+        <div class="card mb-4">
+            <div class="card-header">Product Batch Form</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="order_detail_id">Select Product</label>
+                        <select class="form-control" id="order_detail_id" name="order_detail_id" required>
+                            <option value="" disabled selected>Select a product</option>
+                            {% for order in order_details %}
+                                <option value="{{ order.order_detail_id }}">
+                                    {{ order.product_name }} (Order: {{ order.order_relation.order_id }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="batch_number">Batch Number</label>
+                        <input type="text" class="form-control" id="batch_number" name="batch_number" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <input type="text" class="form-control" id="category" name="category" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Add Batch</button>
+                    <a href="/view-product-batches/" class="btn btn-secondary">Back to Batches</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+{% endblock %}

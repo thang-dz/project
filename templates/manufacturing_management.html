@@ -5,76 +5,73 @@
 {% endblock %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    <div class="alert alert-dismissible">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
+
 <main>
     <div class="container-fluid">
         <h1 class="mt-4">Manufacturing Management</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item active">Manufacturing Management</li>
+            <li class="breadcrumb-item"><a href="/manufacturing-management">Manufacturing Management</a></li>
         </ol>
+       
 
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="alert-container">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <!-- Manufacturing List Table -->
         <div class="card mb-4">
-            <div class="card-header">Orders</div>
+            <div class="card-header">Update Manufacturing Status</div>
             <div class="card-body">
                 <form method="POST">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Product Name</th>
-                                <th>Total Quantity</th>
-                                <th>Status</th>
-                                <th>Batches</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for order in orders %}
-                                <tr>
-                                    <td>{{ order.order_id }}</td>
-                                    <td>{{ order.product_name }}</td>
-                                    <td>{{ order.total_quantity }}</td>
-                                    <td>{{ order.status }}</td>
-                                    <td>
-                                        <ul>
-                                            {% for batch in order.production_batches %}
-                                                <li>Week {{ batch.week_number }}: {{ batch.produced_quantity }} / {{ order.total_quantity }} ({{ batch.status }})</li>
-                                            {% endfor %}
-                                        </ul>
-                                        <label for="batch_id">Batch:</label>
-                                        <select name="batch_id">
-                                            {% for batch in order.production_batches %}
-                                                <option value="{{ batch.batch_id }}">Week {{ batch.week_number }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <label for="produced_quantity">Produced Quantity:</label>
-                                        <input type="number" name="produced_quantity" min="1" required>
-                                        <button type="submit" class="btn btn-primary">Update Batch</button>
-                                    </form>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="form-group">
+                        <label for="batch_id">Product Batch ID</label>
+                        <input type="text" class="form-control" id="batch_id" name="batch_id" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="manufacturing_status">Manufacturing Status</label>
+                        <select class="form-control" id="manufacturing_status" name="manufacturing_status" required>
+                            <option value="In Production">In Production</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Ready for Shipping">Ready for Shipping</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="product_condition">Product Condition</label>
+                        <select class="form-control" id="product_condition" name="product_condition" required>
+                            <option value="Good">Good</option>
+                            <option value="Defective">Defective</option>
+                            <option value="Requires Rework">Requires Rework</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="defect_reason_group" style="display:none;">
+                        <label for="defect_reason">Defect Reason</label>
+                        <textarea class="form-control" id="defect_reason" name="defect_reason" rows="3"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                    <a href="/view-product-batches/" class="btn btn-secondary">Back to Batches</a>
                 </form>
             </div>
         </div>
     </div>
 </main>
+
+<script>
+    document.getElementById("product_condition").addEventListener("change", function() {
+        if (this.value === "Defective") {
+            document.getElementById("defect_reason_group").style.display = "block";
+        } else {
+            document.getElementById("defect_reason_group").style.display = "none";
+        }
+    });
+</script>
+
 {% endblock %}

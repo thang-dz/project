@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Confirm Shipping Payment</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Confirm Shipping Payment for Order #{{ shipping.order_id }}</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/shipping-list">Shipping List</a></li>
+            <li class="breadcrumb-item active">Confirm Payment</li>
+        </ol>
+
+        <!-- Confirm Shipping Payment Form -->
+        <div class="card mb-4">
+            <div class="card-header">Payment Confirmation</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="form-group">
+                        <label for="payment_amount">Payment Amount</label>
+                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{ shipping.shipping_cost }}" required>
+                        <small class="form-text text-muted">Please enter the payment amount for the shipping cost.</small>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="alert alert-dismissible">
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <button type="submit" class="btn btn-primary">Confirm Payment</button>
+                    <a href="{{ url_for('shipping_list') }}" class="btn btn-secondary">Back to Shipping List</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
