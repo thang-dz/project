@@ -28,16 +28,18 @@
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                             Import
                         </a>
+
+                        <a class="nav-link" href="/inventory/">
+                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
+                            Inventory
+                        </a>
                        
                         
                         <a class="nav-link" href="/order/">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                             Order
                         </a>
-                        <a class="nav-link" href="/inventory/">
-                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
-                            Inventory
-                        </a>
+                       
                         <a class="nav-link" href="/view-product-batches/">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
                             Manufacturing Management
@@ -78,5 +80,13 @@
     <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='js/datatables-demo.js')}}"></script>
     <script src="{{ url_for('static', filename='js/script.js')}}"></script>
+    <script>
+        $(document).ready(function() {
+            // Auto-hide the alert after 2 seconds
+            setTimeout(function() {
+                $(".alert").fadeOut("slow");
+            }, 2000); // 2000 milliseconds = 2 seconds
+        });
+    </script>
 </body>
 </html>

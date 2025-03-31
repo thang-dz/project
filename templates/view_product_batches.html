@@ -7,7 +7,7 @@
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-    <div class="alert alert-dismissible">
+    <div class="alert alert-dismissible fixed-alert">
         {% for category, message in messages %}
             <div class="alert alert-{{ category }}">{{ message }}</div>
         {% endfor %}
@@ -33,7 +33,7 @@
                         <tr>
                             <th>Batch Number</th>
                             <th>Product Name</th>
-                            <th>Supplier</th>
+                            
                             <th>Manufacturing Status</th>
                             <th>Condition</th>
                             <th>Created At</th> <!-- New Column for Timestamp -->
@@ -44,8 +44,7 @@
                         {% for batch in product_batches %}
                             <tr>
                                 <td>{{ batch.batch_number }}</td>
-                                <td>{{ batch.order_detail.product_name }}</td>
-                                <td>{{ batch.order_detail.import_record.sup_name }}</td>
+                                <td>{{ batch.order_detail.product_name }}</td>                                
                                 <td>{{ batch.manufacturing_status }}</td>
                                 <td>{{ batch.product_condition }}</td>
                                 <td>{{ batch.transaction_date.strftime('%Y-%m-%d %H:%M:%S') }}</td> <!-- Format the timestamp -->

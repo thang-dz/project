@@ -34,8 +34,7 @@
                     <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
-                                <th>Product</th>
-                                <th>Material</th>  <!-- Add Material Name -->
+                                <th>Product</th>                                
                                 <th>Quantity</th>
                                 <th>Unit Price</th>
                                 <th>Total Price</th>
@@ -45,10 +44,9 @@
                             {% for order_detail in order.order_details %}
                                 <tr>
                                     <td>{{ order_detail.product_name }}</td>
-                                    <td>{{ order_detail.import_record.material_name }}</td> <!-- Display Material Name -->
                                     <td>{{ order_detail.quantity }}</td>
                                     <td>{{ order_detail.product_price | format_price }}</td> 
-                                    <td>{{ (order_detail.quantity * order_detail.product_price) | format_price }}</td> <!-- Apply format_price filter -->
+                                    <td>{{ (order_detail.quantity * order_detail.product_price) | format_price }}</td> 
                                 </tr>
                             {% endfor %}
                         </tbody>

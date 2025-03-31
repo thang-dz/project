@@ -7,7 +7,7 @@
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        <div class="alert alert-dismissible">
+        <div class="alert alert-dismissible fixed-alert">
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">{{ message }}</div>
             {% endfor %}
