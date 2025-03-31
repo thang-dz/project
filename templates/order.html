@@ -21,7 +21,7 @@
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
             <li class="breadcrumb-item active">Orders</li>
         </ol>
-        <a href="/add-order/" class="btn btn-primary">Add Order</a>
+        <a href="/add-order/" class="btn btn-success">Add Order</a>
         <a href="/deposit-confirm/" class="btn btn-primary">Deposit Confirm</a>
         <br><br>
        
@@ -65,7 +65,7 @@
                                             <form action="{{ url_for('deleteOrder', order_id=order.order_id) }}" method="POST" style="display:inline;">
                                                 <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this inventory item?')">Delete</button>
                                             </form>                                            
-                                            <a href="/create-shipping-order/{{ order.order_id }}" class="btn btn-primary"> Ship</a>                                    
+                                                                           
                                   
                                         </td>
                                     </tr>

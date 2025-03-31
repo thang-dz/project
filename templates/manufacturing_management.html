@@ -20,69 +20,55 @@
         <h1 class="mt-4">Manufacturing Management</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/manufacturing-management">Manufacturing Management</a></li>
+            <li class="breadcrumb-item active">Manufacturing Management</li>
         </ol>
 
         <div class="card mb-4">
-            <div class="card-header">Update Manufacturing Status</div>
+            <div class="card-header">Product Batch List</div>
             <div class="card-body">
-                <form method="POST">
-                    <!-- Product Batch ID -->
-                    <div class="form-group">
-                        <label for="batch_id">Product Batch ID</label>
-                        <input type="text" class="form-control" id="batch_id" name="batch_id" required>
-                    </div>
-
-                    <!-- Manufacturing Status -->
-                    <div class="form-group">
-                        <label for="manufacturing_status">Manufacturing Status</label>
-                        <select class="form-control" id="manufacturing_status" name="manufacturing_status" required>
-                            <option value="In Production">In Production</option>
-                            <option value="Completed">Completed</option>
-                            <option value="Ready for Shipping">Ready for Shipping</option>
-                        </select>
-                    </div>
-
-                    <!-- Product Condition -->
-                    <div class="form-group">
-                        <label for="product_condition">Product Condition</label>
-                        <select class="form-control" id="product_condition" name="product_condition" required>
-                            <option value="Good">Good</option>
-                            <option value="Defective">Defective</option>
-                            <option value="Requires Rework">Requires Rework</option>
-                        </select>
-                    </div>
-
-                    <!-- Defect Reason (conditionally shown when "Defective" is selected) -->
-                    <div class="form-group" id="defect_reason_group" style="display:none;">
-                        <label for="defect_reason">Defect Reason</label>
-                        <textarea class="form-control" id="defect_reason" name="defect_reason" rows="3"></textarea>
-                    </div>
-
-                    <!-- Quantity to Update -->
-                    <div class="form-group">
-                        <label for="quantity_to_update">Quantity</label>
-                        <input type="number" class="form-control" id="quantity_to_update" name="quantity_to_update" required min="1">
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary">Update Status</button>
-                    <a href="/view-product-batches/" class="btn btn-secondary">Back to Batches</a>
-                </form>
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Batch Number</th>
+                            <th>Product Name</th>
+                            <th>Order ID</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in product_batches %}
+                            <tr>
+                                <td>{{batch.batch_id}}</td>
+                                <td>{{ batch.batch_number }}</td>
+                                <td>{{ batch.order_detail.product_name }}</td>
+                                <td>{{ batch.order_detail.order_id }}</td>
+                                <td>{{ batch.manufacturing_status }}</td>
+                                <td>
+                                    {% if batch.manufacturing_status == "Completed" %}
+                                        <form action="{{ url_for('manufacturing_management') }}" method="POST" style="display:inline;">
+                                            <input type="hidden" name="batch_id" value="{{ batch.batch_id }}">
+                                            <input type="hidden" name="manufacturing_status" value="Ready for Shipping">
+                                            <button type="submit" class="btn btn-primary">Mark as Ready for Shipping</button>
+                                        </form>
+                                    {% elif batch.manufacturing_status == "Ready for Shipping" %}
+                                        <button class="btn btn-success" disabled>Ready for Shipping</button>
+                                    {% elif batch.manufacturing_status == "Shipped" %}
+                                        <button class="btn btn-secondary" disabled>Shipped</button>
+                                    {% else %}
+                                        <span class="text-muted">No status set</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </main>
 
-<script>
-    // Show the defect reason field when "Defective" is selected
-    document.getElementById("product_condition").addEventListener("change", function() {
-        if (this.value === "Defective") {
-            document.getElementById("defect_reason_group").style.display = "block";
-        } else {
-            document.getElementById("defect_reason_group").style.display = "none";
-        }
-    });
-</script>
+
 
 {% endblock %}

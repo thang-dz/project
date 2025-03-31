@@ -86,10 +86,10 @@ $(document).ready(function() {
           alert("Please fill the Prodcut first");
         }
     });
-    $(document).ready(function() {
-    // Kích hoạt Bootstrap Select sau khi trang đã tải
-    $('.selectpicker').selectpicker();
-    });
+    // $(document).ready(function() {
+    // // Kích hoạt Bootstrap Select sau khi trang đã tải
+    // $('.selectpicker').selectpicker();
+    // });
 
     $("#movements_from").submit(function (e) {
         var msg = ''

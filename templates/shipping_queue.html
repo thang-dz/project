@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Shipping Queue</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Shipping Queue</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Shipping Queue</li>
+        </ol>
+        <a href="/shipping-list/" class="btn btn-success">Shipping List</a>
+        <br><br><br>
+
+        <div class="card mb-4">
+            <div class="card-header">Products Ready for Shipping</div>
+            <div class="card-body">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product Name</th>
+                            <th>Order ID</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in shipping_queue_items %}
+                            <tr>
+                                <td>{{ item.batch_id }}</td>
+                                <td>{{ item.product_name }}</td>
+                                <td>{{ item.order_id }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.status }}</td>
+                                <td>
+                                    <a href="{{ url_for('create_shipping_order', order_id=item.order_id) }}" class="btn btn-primary">Create Shipping Order</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable();
+    });
+</script>
+
+{% endblock %}

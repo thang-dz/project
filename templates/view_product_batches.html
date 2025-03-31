@@ -23,7 +23,7 @@
             <li class="breadcrumb-item"><a href="/view-product-batches/">Product Batches</a></li>
         </ol>
 
-        <a href="/add-product-batch/" class="btn btn-primary">Add</a>
+        <a href="/add-product-batch/" class="btn btn-success">Add</a>
         <a href="/manufacturing-management/" class="btn btn-primary">Update Status</a>
         <br><br>
         <div class="card mb-4">
@@ -37,7 +37,7 @@
                             <th>Product Name</th>
                             <th>Order ID</th>
                             <th>Manufacturing Status</th>
-                            <th>Condition</th>
+                            <th>Quantity Producted</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -50,7 +50,17 @@
                                 <td>{{ batch.order_detail.product_name }}</td>
                                 <td>{{ batch.order_detail.order_id }}</td>
                                 <td>{{ batch.manufacturing_status }}</td>
-                                <td>{{ batch.product_condition }}</td>
+                                <td>
+                                    {% if batch.quantity_completed is none or batch.quantity_completed == 0 %}
+                                        <form action="{{ url_for('update_quantity_produced', batch_id=batch.batch_id) }}" method="POST">
+                                            <input type="number" name="quantity_to_update" placeholder="Enter quantity" required min="0" value="{{ batch.quantity_completed or 0 }}">
+                                            <button type="submit" class="btn btn-success">Update</button>
+                                        </form>
+                                    {% else %}
+                                        <input type="number" value="{{ batch.quantity_completed }}" disabled class="form-control">
+                                    {% endif %}
+                                </td>
+                                
                                 <td>{{ batch.transaction_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                                 <td>                                   
                                 <form action="{{  url_for('delete_product_batch', batch_id=batch.batch_id)}}" method="POST" style="display:inline;">

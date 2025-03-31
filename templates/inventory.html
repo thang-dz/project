@@ -52,7 +52,7 @@
                                 <th>Material Name</th>                                 
                                 <th>Material Quantity</th>                                
                                 <th>Date</th>
-                                <th>Category</th>
+                                <th>WareHouse</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -72,14 +72,16 @@
                                     </td>
                                    
                                     <td>{{ item.transaction_date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
-                                    <td> {% if item.category is none %}
-                                        <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST">
-                                            <input type="text" name="category" placeholder="Enter category" required>
-                                            <button type="submit" class="btn btn-primary">Classify</button>
-                                        </form>
-                                    {% else %}
-                                        {{ item.category }}
-                                    {% endif %}</td>
+                                    <td>
+                                         {% if item.category is none %}
+                                            <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST">
+                                                <input type="text" name="category" placeholder="Enter " required>
+                                                <button type="submit" class="btn btn-primary">Classify</button>
+                                            </form>
+                                        {% else %}
+                                            {{ item.category }}
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <form action="{{ url_for('delete_inventory', inventory_id=item.stockTran_id) }}" method="POST" style="display:inline;">
                                             <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this inventory item?')">Delete</button>

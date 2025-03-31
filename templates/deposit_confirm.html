@@ -11,19 +11,20 @@
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item active">Deposit Confirm</li>
         </ol>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert alert-dismissible fixed-alert">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
         <div class="card mb-4">
             <div class="card-header">Deposit Confirm Table</div>
             <div class="card-body">
                 <!-- Display flash messages -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        <div class="alert alert-dismissible">
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
+               
 
                 <!-- Deposit Confirmation Form -->
                 <form action="/deposit-confirm/" method="POST">

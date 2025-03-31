@@ -145,6 +145,7 @@ class ProductBatch(db.Model):
     product_condition = db.Column(db.String(50), nullable=True)
     defect_reason = db.Column(db.String(255), nullable=True)
     transaction_date = db.Column(db.DateTime, default=vietnam_now)
+    quantity_to_update=db.Column(db.Integer, default=0)
 
     imports = db.relationship('Import', secondary=product_batch_materials, backref='product_batches')
     
@@ -154,6 +155,23 @@ class ProductBatch(db.Model):
     
     def is_complete(self):       
         return self.quantity_in_production == self.quantity_completed
+
+
+class ShippingQueue(db.Model):
+    __tablename__ = 'shipping_queue'
+    shipping_queue_id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.order_id'))
+    batch_id = db.Column(db.Integer, db.ForeignKey('product_batches.batch_id'))
+    product_name = db.Column(db.String(255), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(50), default='Pending')  # Trạng thái mặc định là "Pending"
+    
+    # Thiết lập quan hệ với bảng ProductBatch và Order
+    order_detail = db.relationship('Order', backref='shipping_queue')
+    product_batch = db.relationship('ProductBatch', backref='shipping_queue')
+
+    def __repr__(self):
+        return f"<ShippingQueue {self.shipping_queue_id} - Order {self.order_id} - Batch {self.batch_id}>"
 
 
 class Shipping(db.Model):
@@ -169,9 +187,6 @@ class Shipping(db.Model):
 
     def __repr__(self):
         return f"<Shipping {self.shipping_id} - Order {self.order_id}>"
-
-
-
 
 
 class PurchaseRequest(db.Model):
@@ -627,10 +642,16 @@ def create_purchase_request(import_id):
                         transaction_date=datetime.utcnow()
                     )
                     db.session.add(new_purchase_request)
-                    db.session.commit()
 
-                    # Update the stock in inventory (Optional: If stock is replenished)
+                    # Update the stock in import and Inventory
                     import_request.quantity_in_stock += quantity_to_order
+
+                    # Also update the corresponding inventory
+                    inventory_record = Inventory.query.filter_by(import_id=import_request.import_id).first()
+                    if inventory_record:
+                        inventory_record.quantity += quantity_to_order  # Update inventory quantity as well
+
+                    # Commit the changes to both PurchaseRequest and Inventory
                     db.session.commit()
 
                     flash("Purchase request created and stock updated successfully.", "success")
@@ -646,6 +667,7 @@ def create_purchase_request(import_id):
 
     flash("Stock level is sufficient. No purchase request needed.", "info")
     return redirect(url_for('view_inventory'))
+
 
 
 @app.route('/add-product-batch/', methods=["GET", "POST"])
@@ -719,9 +741,8 @@ def manufacturing_management():
     if request.method == "POST":
         batch_id = request.form['batch_id']
         manufacturing_status = request.form['manufacturing_status']
-        product_condition = request.form['product_condition']
+        product_condition = request.form.get('product_condition', 'Good')  # Nếu không có, mặc định là 'Good'
         defect_reason = request.form.get('defect_reason', '')
-        quantity_to_update = int(request.form.get('quantity_to_update', 0))  # Quantity produced for this batch
 
         # Get the product batch
         product_batch = ProductBatch.query.get(batch_id)
@@ -729,12 +750,7 @@ def manufacturing_management():
             flash("Product batch not found.", 'danger')
             return redirect(url_for('manufacturing_management'))
 
-        # Prevent processing incomplete product batches
-        if not product_batch.is_complete():  # Check if the batch is complete before processing
-            flash("Cannot proceed with incomplete materials.", 'danger')
-            return redirect(url_for('manufacturing_management'))
-
-        # Workflow validation for manufacturing status transitions
+        # Validate status transition
         valid_transitions = {
             'In Production': ['Completed'],
             'Completed': ['Ready for Shipping']
@@ -745,57 +761,33 @@ def manufacturing_management():
                 flash("Invalid status transition!", "danger")
                 return redirect(url_for('manufacturing_management'))
 
-        # Ensure defect reason is provided if the condition is 'Defective'
-        if product_condition == 'Defective' and not defect_reason:
-            flash("Please provide a reason for the defect.", 'danger')
-            return redirect(url_for('manufacturing_management'))
-
-        # Update the product batch status and condition
+        # Update product batch status and condition
         product_batch.manufacturing_status = manufacturing_status
         product_batch.product_condition = product_condition
         product_batch.defect_reason = defect_reason if product_condition == 'Defective' else None
 
-        # Update inventory (reduce quantity from Inventory table)
-        for import_record in product_batch.imports:
-            # Find the inventory record for the material
-            inventory_record = Inventory.query.filter_by(import_id=import_record.import_id).first()
-
-            if inventory_record and inventory_record.quantity >= quantity_to_update:
-                # Reduce the quantity from Inventory and Import
-                inventory_record.quantity -= quantity_to_update
-                import_record.quantity_in_stock -= quantity_to_update
-
-                try:
-                    # Commit the changes to both the Inventory and Import models in the same session
-                    db.session.commit()
-                    flash("Inventory and Import records updated successfully.", 'success')
-                except Exception as e:
-                    db.session.rollback()
-                    flash(f"Error updating inventory: {str(e)}", 'danger')
-                    return redirect(url_for('manufacturing_management'))
-            else:
-                flash(f"Not enough stock in inventory for material: {import_record.material_name}.", 'danger')
-                return redirect(url_for('manufacturing_management'))
-
-        # Calculate the total quantity produced across all batches for this order
-        order_detail = OrderDetail.query.get(product_batch.order_detail_id)
-        total_produced = sum(batch.quantity_completed for batch in product_batch.order_detail.product_batches)
-
-        # If total produced is equal or greater than order quantity, update batch status to 'Completed'
-        if total_produced >= order_detail.quantity:
-            product_batch.manufacturing_status = 'Completed'
-            flash("Manufacturing status updated to Completed.", 'success')
-        else:
-            remaining_quantity = order_detail.quantity - total_produced
-            product_batch.manufacturing_status = 'In Production'
-            flash(f"Manufacturing status updated to In Production. Remaining quantity: {remaining_quantity}.", 'warning')
-
-        # Commit changes to the database for the product batch status
+        # Commit changes to the database
         try:
             db.session.commit()
+            flash("Manufacturing status updated successfully.", 'success')
         except Exception as e:
             db.session.rollback()
             flash(f"Error: {str(e)}", 'danger')
+
+        # Move to ShippingQueue if product batch is "Ready for Shipping"
+        if manufacturing_status == "Ready for Shipping":
+            shipping_queue_item = ShippingQueue(
+                order_id=product_batch.order_detail.order_id,
+                batch_id=product_batch.batch_id,
+                product_name=product_batch.order_detail.product_name,
+                quantity=product_batch.quantity_completed,
+                status="Pending"  # Initial status for shipping
+            )
+            db.session.add(shipping_queue_item)
+            db.session.commit()
+
+            flash(f"Product moved to shipping queue for Order #{product_batch.order_detail.order_id}", 'success')
+            return redirect(url_for('shipping_queue_list'))  # Redirect to shipping queue list
 
         # Reload updated data
         product_batches = ProductBatch.query.all()
@@ -809,26 +801,88 @@ def manufacturing_management():
     return render_template('manufacturing_management.html', product_batches=product_batches, inventories=inventories)
 
 
+@app.route('/update-quantity-produced/<int:batch_id>', methods=["GET", "POST"])
+def update_quantity_produced(batch_id):
+    product_batch = ProductBatch.query.get(batch_id)
+    if not product_batch:
+        flash("Product batch not found.", 'danger')
+        return redirect(url_for('view_product_batches'))
+
+    order_detail = product_batch.order_detail  # Order related to the batch
+
+    if request.method == "POST":
+        # Nhập số lượng sản phẩm đã sản xuất
+        quantity_to_update = int(request.form.get('quantity_to_update', 0))  # Quantity produced for this batch
+
+        # Cập nhật số lượng sản phẩm đã sản xuất cho batch
+        product_batch.quantity_completed = quantity_to_update  # Update quantity_completed with the new value
+
+        # Cập nhật số lượng trong kho (trừ số lượng tương ứng từ kho)
+        for import_record in product_batch.imports:
+            inventory_record = Inventory.query.filter_by(import_id=import_record.import_id).first()
+
+            if inventory_record and inventory_record.quantity >= quantity_to_update:
+                # Trừ số lượng trong kho và bản ghi nhập
+                inventory_record.quantity -= quantity_to_update
+                import_record.quantity_in_stock -= quantity_to_update
+
+                try:
+                    db.session.commit()
+                    flash("Quantity produced updated successfully and inventory updated.", 'success')
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f"Error updating inventory: {str(e)}", 'danger')
+                    return redirect(url_for('view_product_batches'))
+            else:
+                flash(f"Not enough stock in inventory for material: {import_record.material_name}.", 'danger')
+                return redirect(url_for('view_product_batches'))
+
+        # Tính tổng số sản phẩm đã sản xuất (tổng tất cả các batch)
+        total_produced = sum(batch.quantity_completed for batch in order_detail.product_batches)
+
+        # So sánh số lượng sản phẩm đã sản xuất với quantity trong order
+        if total_produced >= order_detail.quantity:
+            # Nếu số lượng sản phẩm đã sản xuất bằng hoặc lớn hơn số lượng yêu cầu, chuyển trạng thái thành "Completed"
+            product_batch.manufacturing_status = "Completed"
+            db.session.commit()
+            flash("Complete Product! Manufacturing status set to 'Completed'.", 'success')
+        else:
+            remaining_quantity = order_detail.quantity - total_produced
+            flash(f"Remaining quantity to produce: {remaining_quantity}. Creating new batch...", 'warning')
+
+            # Tạo một batch mới (batch number mới)
+            new_batch_number = f"Batch-{batch_id+1}"  # Tạo batch number mới
+            new_product_batch = ProductBatch(
+                batch_number=new_batch_number,
+                order_detail_id=order_detail.order_detail_id,
+                manufacturing_status="In Production",  # Cập nhật trạng thái cho batch mới
+                quantity_completed=0,  # Batch mới bắt đầu với quantity = 0
+                transaction_date=vietnam_now()
+            )
+            db.session.add(new_product_batch)
+            db.session.commit()
+
+            # Cập nhật lại trạng thái sản xuất cho batch hiện tại nếu cần
+            if total_produced + remaining_quantity >= order_detail.quantity:
+                product_batch.manufacturing_status = "Completed"
+                db.session.commit()
+                flash("Complete Product with new batch!", 'success')
+            
+            return redirect(url_for('view_product_batches'))  # Quay lại trang quản lý sản xuất
+
+    return render_template('view_product_batches.html', product_batch=product_batch)
 
 
-
-
-def generate_tracking_code():
-    length = 10
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+@app.route('/shipping-queue/', methods=["GET"])
+def shipping_queue_list():
+    # Fetch all products that are ready for shipping (status "Pending")
+    shipping_queue_items = ShippingQueue.query.filter_by(status="Pending").all()
+    return render_template('shipping_queue.html', shipping_queue_items=shipping_queue_items)
 
 @app.route('/create-shipping-order/<int:order_id>', methods=["GET", "POST"])
 def create_shipping_order(order_id):
     # Fetch the order from the database
     order = Order.query.get_or_404(order_id)
-    
-    # Check if the order has already been shipped or has a shipping status other than "Pending"
-    # Access the first shipping record if it exists
-    if order.shipping_details:
-        shipping_record = order.shipping_details[0]  # Get the first shipping record
-        if shipping_record.shipping_status != "Pending":
-            flash("This order has already been shipped or is not in pending status. It cannot be shipped again.", "danger")
-            return redirect(url_for('view_shipping', shipping_id=shipping_record.shipping_id))
 
     if request.method == "POST":
         provider = request.form['provider']
@@ -841,10 +895,6 @@ def create_shipping_order(order_id):
 
         # Generate a unique tracking code
         tracking_code = generate_tracking_code()
-
-        # Check if the tracking code already exists, if it does, regenerate it
-        while Shipping.query.filter_by(tracking_code=tracking_code).first():
-            tracking_code = generate_tracking_code()
 
         # Create shipping order
         shipping = Shipping(
@@ -864,8 +914,63 @@ def create_shipping_order(order_id):
             db.session.rollback()
             flash(f"Error creating shipping order: {str(e)}", 'danger')
     
-    # Render the template and pass the order object
     return render_template('create_shipping_order.html', order=order)
+
+
+
+def generate_tracking_code():
+    length = 10
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+# @app.route('/create-shipping-order/<int:order_id>', methods=["GET", "POST"])
+# def create_shipping_order(order_id):
+#     # Fetch the order from the database
+#     order = Order.query.get_or_404(order_id)
+    
+#     # Check if the order has already been shipped or has a shipping status other than "Pending"
+#     # Access the first shipping record if it exists
+#     if order.shipping_details:
+#         shipping_record = order.shipping_details[0]  # Get the first shipping record
+#         if shipping_record.shipping_status != "Pending":
+#             flash("This order has already been shipped or is not in pending status. It cannot be shipped again.", "danger")
+#             return redirect(url_for('view_shipping', shipping_id=shipping_record.shipping_id))
+
+#     if request.method == "POST":
+#         provider = request.form['provider']
+#         shipping_cost = request.form.get('shipping_cost', type=float)
+
+#         # Validate shipping cost
+#         if shipping_cost is None or shipping_cost <= 0:
+#             flash("Shipping cost must be a positive value.", "danger")
+#             return redirect(url_for('create_shipping_order', order_id=order_id))
+
+#         # Generate a unique tracking code
+#         tracking_code = generate_tracking_code()
+
+#         # Check if the tracking code already exists, if it does, regenerate it
+#         while Shipping.query.filter_by(tracking_code=tracking_code).first():
+#             tracking_code = generate_tracking_code()
+
+#         # Create shipping order
+#         shipping = Shipping(
+#             order_id=order_id,
+#             provider=provider,
+#             tracking_code=tracking_code,
+#             shipping_cost=shipping_cost,
+#             shipping_status="Pending"
+#         )
+
+#         try:
+#             db.session.add(shipping)
+#             db.session.commit()
+#             flash(f"Shipping order created for Order #{order_id} with tracking code {tracking_code}.", 'success')
+#             return redirect(url_for('view_shipping', shipping_id=shipping.shipping_id))
+#         except Exception as e:
+#             db.session.rollback()
+#             flash(f"Error creating shipping order: {str(e)}", 'danger')
+    
+#     # Render the template and pass the order object
+#     return render_template('create_shipping_order.html', order=order)
 
 @app.route('/confirm-shipping-payment/<int:shipping_id>', methods=["POST", "GET"])
 def confirm_shipping_payment(shipping_id):
