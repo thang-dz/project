@@ -46,34 +46,38 @@ $(document).ready(function() {
         }
       });
     });
-    $(document).ready(function () {
-      $("#submitMaterial").on("click", function (e) {
-        e.preventDefault();
-    
-        let materialName = $("#material_name").val().trim();
-        if (!materialName) {
+    $("#submitMaterial").on("click", function (e) {
+      e.preventDefault();  // Prevent form from submitting immediately
+  
+      let materialName = $("#material_name").val().trim();
+  
+      // Check if material name is empty
+      if (!materialName) {
           alert("Material name cannot be empty.");
           return;
-        }
-    
-        $.ajax({
-          url: "/dub-material/",
+      }
+  
+      // AJAX request to check if the material name is unique
+      $.ajax({
+          url: "/check-material-duplicate/",  // Your route for checking duplicate material
           type: "POST",
           data: { material_name: materialName },
-        })
-          .done(function (data) {
-            if (data.output) {
-              $("#product_form").submit();
-            } else {
-              alert("This Name is already used, please choose another one.");
-            }
-          })
-          .fail(function (jqXHR, textStatus, errorThrown) {
-            console.error("AJAX Error:", textStatus, errorThrown);
-            alert("Something went wrong. Please try again.");
-          });
+          dataType: "json",  // Ensure you get a JSON response
+          success: function (data) {
+              if (data.output) {
+                  // If the material name is unique, submit the form
+                  $("#product_form").submit();
+              } else {
+                  alert("This Name is already used, please choose another one.");
+              }
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+              console.error("AJAX Error:", textStatus, errorThrown);
+              alert("Something went wrong. Please try again.");
+          }
       });
-    });
+  });
+  
     
 
     $("#product_form").submit(function (e) {
@@ -81,6 +85,10 @@ $(document).ready(function() {
           e.preventDefault();
           alert("Please fill the Prodcut first");
         }
+    });
+    $(document).ready(function() {
+    // Kích hoạt Bootstrap Select sau khi trang đã tải
+    $('.selectpicker').selectpicker();
     });
 
     $("#movements_from").submit(function (e) {

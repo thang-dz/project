@@ -24,6 +24,7 @@
         </ol>
 
         <a href="/add-product-batch/" class="btn btn-primary">Add</a>
+        <a href="/manufacturing-management/" class="btn btn-primary">Update Status</a>
         <br><br>
         <div class="card mb-4">
             <div class="card-header">Product Batch List</div>
@@ -31,26 +32,32 @@
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
+                            <th>ID</th>
                             <th>Batch Number</th>
                             <th>Product Name</th>
-                            
+                            <th>Order ID</th>
                             <th>Manufacturing Status</th>
                             <th>Condition</th>
-                            <th>Created At</th> <!-- New Column for Timestamp -->
+                            <th>Created At</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for batch in product_batches %}
                             <tr>
+                                <td>{{batch.batch_id}}</td>
                                 <td>{{ batch.batch_number }}</td>
-                                <td>{{ batch.order_detail.product_name }}</td>                                
+                                <td>{{ batch.order_detail.product_name }}</td>
+                                <td>{{ batch.order_detail.order_id }}</td>
                                 <td>{{ batch.manufacturing_status }}</td>
                                 <td>{{ batch.product_condition }}</td>
-                                <td>{{ batch.transaction_date.strftime('%Y-%m-%d %H:%M:%S') }}</td> <!-- Format the timestamp -->
-                                <td>
-                                    <a href="{{ url_for('manufacturing_management', batch_id=batch.batch_id) }}" class="btn btn-primary">Update Status</a>
+                                <td>{{ batch.transaction_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                <td>                                   
+                                <form action="{{  url_for('delete_product_batch', batch_id=batch.batch_id)}}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this item?')">Delete</button>
+                                    </form>
                                 </td>
+                                
                             </tr>
                         {% endfor %}
                     </tbody>

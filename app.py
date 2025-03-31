@@ -38,6 +38,10 @@ def vietnam_now():
     """Return the current time in Vietnam timezone."""
     return datetime.now(VIETNAM_TZ)
 
+product_batch_materials = db.Table('product_batch_materials',
+    db.Column('product_batch_id', db.Integer, db.ForeignKey('product_batches.batch_id'), primary_key=True),
+    db.Column('import_id', db.Integer, db.ForeignKey('imports.import_id'), primary_key=True)
+)
 class Import(db.Model):
     __tablename__ = 'imports'
     import_id = db.Column(db.Integer, primary_key=True)
@@ -82,6 +86,7 @@ class Inventory(db.Model):
     quantity = db.Column(db.Integer, nullable=False, default=0)  # Quantity of the product in stock
     transaction_type = db.Column(db.String(50), nullable=False)  # "Addition" or "Removal"
     transaction_date = db.Column(db.DateTime, default=vietnam_now)  # Date of transaction
+    
 
     import_id = db.Column(db.Integer, db.ForeignKey('imports.import_id'), nullable=False)  # Foreign Key to Import (raw material)
 
@@ -116,6 +121,7 @@ class OrderDetail(db.Model):
 
     # Relationship to Import
     import_record = db.relationship('Import', backref='order_details', lazy=True)
+    
 
     def __repr__(self):
         return f'<OrderDetail {self.orderdetail_id}>'
@@ -139,6 +145,9 @@ class ProductBatch(db.Model):
     product_condition = db.Column(db.String(50), nullable=True)
     defect_reason = db.Column(db.String(255), nullable=True)
     transaction_date = db.Column(db.DateTime, default=vietnam_now)
+
+    imports = db.relationship('Import', secondary=product_batch_materials, backref='product_batches')
+    
 
     def __repr__(self):
         return f"<Batch #{self.batch_id} - OrderDetail #{self.order_detail_id}>"
@@ -241,30 +250,18 @@ def delete_inventory(inventory_id):
     return redirect(url_for('view_inventory'))  # Redirect back to the inventory page
 
 
-@app.route('/update-inventory/<int:inventory_id>', methods=["POST", "GET"])
-def update_inventory(inventory_id):
-    inventory = Inventory.query.get_or_404(inventory_id)
-
-    if request.method == "POST":
-        quantity_removed = int(request.form.get("quantity_removed"))
-
-        if quantity_removed > inventory.quantity:
-            flash("Cannot remove more than available stock.", "danger")
-            return redirect(url_for('update_inventory', inventory_id=inventory_id))
-
-        inventory.quantity -= quantity_removed
-        inventory.transaction_type = "Removal"
-        db.session.commit()
-
-        flash(f"{quantity_removed} units removed from inventory.", "success")
-        return redirect(url_for('view_inventory'))
-
-    return render_template("update-inventory.html", inventory=inventory)
 
 @app.route('/add-import/', methods=["GET", "POST"])
 def add_import():
     if request.method == "POST":
         material_name = request.form["material_name"]
+        
+        # Kiểm tra xem material_name đã tồn tại trong cơ sở dữ liệu chưa
+        existing_material = Import.query.filter_by(material_name=material_name).first()
+        if existing_material:
+            flash("Material name already exists. Please choose a different name.", "danger")
+            return render_template("add-import.html")
+
         material_description = request.form.get("material_description", "")
         quantity_in_stock = int(request.form.get("quantity_in_stock", 0))
         reorder_level = int(request.form.get("reorder_level", 10))
@@ -273,6 +270,7 @@ def add_import():
         sup_contact_info = request.form["sup_contact_info"]
         sup_address = request.form["sup_address"]
 
+        # Create a new Import record
         new_import = Import(
             material_name=material_name,
             material_description=material_description,
@@ -282,43 +280,47 @@ def add_import():
             sup_contact_info=sup_contact_info,
             sup_address=sup_address,
             status="Wait"
-        
         )
 
         try:
             db.session.add(new_import)
             db.session.commit()
             flash("Import added successfully!", "success")
-            return redirect(url_for('view_import'))
+            return redirect(url_for('view_import'))  # Redirect to the page showing imports
         except Exception as e:
             db.session.rollback()
             flash(f"Error adding import: {str(e)}", "danger")
 
-    return render_template("add-import.html")
+    return render_template("add-import.html")  # Render the form when GET request
+
+
 @app.route('/update-import-status/<int:import_id>', methods=["POST"])
 def update_import_status(import_id):
     import_record = Import.query.get_or_404(import_id)
 
-    # Kiểm tra xem trạng thái có phải là "Wait"
+    # Kiểm tra trạng thái của Import
     if import_record.status == "Supplied":
         import_record.status = "Success"
 
-        # Thêm vào inventory
         new_inventory_item = Inventory(
-            product_name=import_record.material_name,
-            quantity=import_record.quantity_in_stock,
-            transaction_type="Addition",  # Thêm vào kho
-            import_id=import_record.import_id
-        )
+                product_name=import_record.material_name,
+                quantity=import_record.quantity_in_stock,
+                transaction_type="Addition",  # Thêm vào kho
+                import_id=import_record.import_id,
+                
+            )
 
         try:
-            # Cập nhật status của Import và thêm vào Inventory
-            db.session.add(new_inventory_item)
-            db.session.commit()
-            flash("Import status updated and material added to inventory.", "success")
+                db.session.add(new_inventory_item)
+                db.session.commit()
+                flash("Import status updated and material added to inventory.", "success")
         except Exception as e:
-            db.session.rollback()
-            flash(f"Error updating status or adding to inventory: {str(e)}", "danger")
+                db.session.rollback()
+                flash(f"Error updating status or adding to inventory: {str(e)}", "danger")
+
+        
+       
+        
     else:
         flash("The import is already marked as 'Success'.", "warning")
 
@@ -330,6 +332,7 @@ def update_import(import_id):
     import_record = Import.query.get_or_404(import_id)
 
     if request.method == "POST":
+        # Cập nhật thông tin import
         import_record.material_name = request.form['material_name']
         import_record.material_description = request.form.get('material_description', '')
         import_record.quantity_in_stock = int(request.form.get('quantity_in_stock', 0))
@@ -339,15 +342,32 @@ def update_import(import_id):
         import_record.sup_contact_info = request.form['sup_contact_info']
         import_record.sup_address = request.form['sup_address']
 
-        try:
+        # Cập nhật số lượng trong Inventory nếu tồn tại
+        inventory_item = Inventory.query.filter_by(import_id=import_record.import_id).first()
+        if inventory_item:
+            inventory_item.quantity = import_record.quantity_in_stock  # Cập nhật lại số lượng
+            try:
+                db.session.commit()
+                flash("Import updated successfully and inventory updated!", "success")
+                return redirect(url_for('view_import'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Error updating import or inventory: {str(e)}", "danger")
+        else:
+            flash("Inventory item not found for this import.", "danger")
+           
+            new_inventory_item = Inventory(
+                product_name=import_record.material_name,
+                quantity=import_record.quantity_in_stock,
+                transaction_type="Addition",  # Thêm vào kho
+                import_id=import_record.import_id,
+            )
+            db.session.add(new_inventory_item)
             db.session.commit()
-            flash("Import updated successfully!", "success")
-            return redirect(url_for('view_import'))
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error updating import: {str(e)}", "danger")
 
     return render_template("update-import.html", import_record=import_record)
+
+
 
 @app.route('/delete-import/<int:import_id>', methods=["POST"])
 def delete_import(import_id):
@@ -631,16 +651,18 @@ def create_purchase_request(import_id):
 @app.route('/add-product-batch/', methods=["GET", "POST"])
 def add_product_batch():
     order_details = OrderDetail.query.all()
+    imports = Import.query.all()  # Get all materials (imports)
 
     if request.method == "POST":
         order_detail_id = request.form['order_detail_id']
         batch_number = request.form['batch_number']
         category = request.form['category']
+        material_ids = request.form.getlist('material_ids')  # List of material IDs
 
-        # Check if batch number already exists
-        existing_batch = ProductBatch.query.filter_by(batch_number=batch_number).first()
+        # Check if the batch number already exists for the same order_detail_id
+        existing_batch = ProductBatch.query.filter_by(order_detail_id=order_detail_id, batch_number=batch_number).first()
         if existing_batch:
-            flash("Batch number already exists.", 'danger')
+            flash("Batch number already exists for this order.", 'danger')
             return redirect(url_for('add_product_batch'))
 
         # Create a new product batch
@@ -649,6 +671,12 @@ def add_product_batch():
             batch_number=batch_number,
             category=category
         )
+
+        # Link materials to the batch (many-to-many relationship)
+        for material_id in material_ids:
+            import_data = Import.query.get(material_id)
+            if import_data:
+                new_batch.imports.append(import_data)  # Use the `imports` relationship
 
         try:
             db.session.add(new_batch)
@@ -659,7 +687,27 @@ def add_product_batch():
             db.session.rollback()
             flash(f"Error: {str(e)}", 'danger')
 
-    return render_template('add_product_batch.html', order_details=order_details)
+    return render_template('add_product_batch.html', order_details=order_details, imports=imports)
+
+
+@app.route('/delete-product-batch/<int:batch_id>', methods=["POST"])
+def delete_product_batch(batch_id):
+    try:
+        batch_to_delete = ProductBatch.query.get(batch_id)
+        if batch_to_delete:
+            # Remove relationships (if any) or perform any necessary clean-up
+            db.session.delete(batch_to_delete)
+            db.session.commit()
+            flash("Product batch deleted successfully.", 'success')
+        else:
+            flash("Batch not found.", 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error: {str(e)}", 'danger')
+
+    return redirect(url_for('view_product_batches'))
+
+
 
 @app.route('/view-product-batches/', methods=["GET"])
 def view_product_batches():
@@ -669,12 +717,11 @@ def view_product_batches():
 @app.route('/manufacturing-management/', methods=["GET", "POST"])
 def manufacturing_management():
     if request.method == "POST":
-        # Retrieve form data
         batch_id = request.form['batch_id']
-        order_id = request.form['order_id']
-        product_name = request.form['product_name']
-        material = request.form['material']
-        product_quantity = int(request.form['product_quantity'])  # Assuming this is the quantity entered by the user
+        manufacturing_status = request.form['manufacturing_status']
+        product_condition = request.form['product_condition']
+        defect_reason = request.form.get('defect_reason', '')
+        quantity_to_update = int(request.form.get('quantity_to_update', 0))  # Quantity produced for this batch
 
         # Get the product batch
         product_batch = ProductBatch.query.get(batch_id)
@@ -682,58 +729,87 @@ def manufacturing_management():
             flash("Product batch not found.", 'danger')
             return redirect(url_for('manufacturing_management'))
 
-        # Ensure the batch is complete before proceeding
-        if not product_batch.is_complete():
+        # Prevent processing incomplete product batches
+        if not product_batch.is_complete():  # Check if the batch is complete before processing
             flash("Cannot proceed with incomplete materials.", 'danger')
             return redirect(url_for('manufacturing_management'))
 
-        # Ensure the product batch contains the specified material
-        if material not in product_batch.materials:
-            flash("Material not found in the product batch.", 'danger')
+        # Workflow validation for manufacturing status transitions
+        valid_transitions = {
+            'In Production': ['Completed'],
+            'Completed': ['Ready for Shipping']
+        }
+
+        if manufacturing_status != product_batch.manufacturing_status:
+            if product_batch.manufacturing_status not in valid_transitions or manufacturing_status not in valid_transitions[product_batch.manufacturing_status]:
+                flash("Invalid status transition!", "danger")
+                return redirect(url_for('manufacturing_management'))
+
+        # Ensure defect reason is provided if the condition is 'Defective'
+        if product_condition == 'Defective' and not defect_reason:
+            flash("Please provide a reason for the defect.", 'danger')
             return redirect(url_for('manufacturing_management'))
 
-        # Enforce valid quantity updates
-        available_material_quantity = product_batch.materials[material]  # Assume we have a materials dict
-        if product_quantity > available_material_quantity:
-            flash("Invalid quantity: exceeds available stock for this material.", "danger")
-            return redirect(url_for('manufacturing_management'))
+        # Update the product batch status and condition
+        product_batch.manufacturing_status = manufacturing_status
+        product_batch.product_condition = product_condition
+        product_batch.defect_reason = defect_reason if product_condition == 'Defective' else None
 
-        # Update the product batch and reduce material quantity
-        product_batch.materials[material] -= product_quantity  # Deduct the quantity from material stock
-        product_batch.quantity_in_production -= product_quantity  # Deduct from production quantity (example)
+        # Update inventory (reduce quantity from Inventory table)
+        for import_record in product_batch.imports:
+            # Find the inventory record for the material
+            inventory_record = Inventory.query.filter_by(import_id=import_record.import_id).first()
 
-        # If all quantity in production is used, update status to 'Completed'
-        if product_batch.quantity_in_production == 0:
+            if inventory_record and inventory_record.quantity >= quantity_to_update:
+                # Reduce the quantity from Inventory and Import
+                inventory_record.quantity -= quantity_to_update
+                import_record.quantity_in_stock -= quantity_to_update
+
+                try:
+                    # Commit the changes to both the Inventory and Import models in the same session
+                    db.session.commit()
+                    flash("Inventory and Import records updated successfully.", 'success')
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f"Error updating inventory: {str(e)}", 'danger')
+                    return redirect(url_for('manufacturing_management'))
+            else:
+                flash(f"Not enough stock in inventory for material: {import_record.material_name}.", 'danger')
+                return redirect(url_for('manufacturing_management'))
+
+        # Calculate the total quantity produced across all batches for this order
+        order_detail = OrderDetail.query.get(product_batch.order_detail_id)
+        total_produced = sum(batch.quantity_completed for batch in product_batch.order_detail.product_batches)
+
+        # If total produced is equal or greater than order quantity, update batch status to 'Completed'
+        if total_produced >= order_detail.quantity:
             product_batch.manufacturing_status = 'Completed'
-
-        # Check if this product already exists in OrderDetail with the same order_id and product_name
-        existing_order_detail = OrderDetail.query.filter_by(order_id=order_id, product_name=product_name).first()
-
-        if existing_order_detail:
-            # If the product already exists, update the quantity
-            existing_order_detail.product_quantity += product_quantity
+            flash("Manufacturing status updated to Completed.", 'success')
         else:
-            # Otherwise, create a new order detail entry
-            order_detail = OrderDetail(
-                order_id=order_id,
-                product_name=product_name,
-                product_quantity=product_quantity
-            )
-            db.session.add(order_detail)
+            remaining_quantity = order_detail.quantity - total_produced
+            product_batch.manufacturing_status = 'In Production'
+            flash(f"Manufacturing status updated to In Production. Remaining quantity: {remaining_quantity}.", 'warning')
 
-        # Commit changes to the database
+        # Commit changes to the database for the product batch status
         try:
             db.session.commit()
-            flash(f"Manufacturing status updated to {product_batch.manufacturing_status}.", 'success')
         except Exception as e:
             db.session.rollback()
             flash(f"Error: {str(e)}", 'danger')
 
-        # Redirect to the product batches view
-        return redirect(url_for('view_product_batches'))
+        # Reload updated data
+        product_batches = ProductBatch.query.all()
+        inventories = Inventory.query.all()
 
-    # For GET requests, render the manufacturing management page
-    return render_template('manufacturing_management.html')
+        return render_template('manufacturing_management.html', product_batches=product_batches, inventories=inventories)
+
+    # For GET requests, render the manufacturing management page with fresh data
+    product_batches = ProductBatch.query.all()
+    inventories = Inventory.query.all()
+    return render_template('manufacturing_management.html', product_batches=product_batches, inventories=inventories)
+
+
+
 
 
 
@@ -865,16 +941,13 @@ def cancel_shipping(shipping_id):
 
 
 
-@app.route("/dub-material/", methods=["POST"])
-def getMaterialDuplicate():
-    if request.method == "POST":
-        material_name = request.form["material_name"]
-        materials = Import.query.filter(Import.material_name == material_name).all()
-
-        if materials:
-            return jsonify({"output": False})  # Name exists
-        else:
-            return jsonify({"output": True})  # Name is unique
+@app.route('/check-material-existence')
+def check_material_existence():
+    material_name = request.args.get('material_name')
+    existing_material = Import.query.filter_by(material_name=material_name).first()
+    if existing_material:
+        return jsonify({'exists': True})
+    return jsonify({'exists': False})
 
 
 

@@ -22,17 +22,18 @@
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="/manufacturing-management">Manufacturing Management</a></li>
         </ol>
-       
 
         <div class="card mb-4">
             <div class="card-header">Update Manufacturing Status</div>
             <div class="card-body">
                 <form method="POST">
+                    <!-- Product Batch ID -->
                     <div class="form-group">
                         <label for="batch_id">Product Batch ID</label>
                         <input type="text" class="form-control" id="batch_id" name="batch_id" required>
                     </div>
 
+                    <!-- Manufacturing Status -->
                     <div class="form-group">
                         <label for="manufacturing_status">Manufacturing Status</label>
                         <select class="form-control" id="manufacturing_status" name="manufacturing_status" required>
@@ -42,6 +43,7 @@
                         </select>
                     </div>
 
+                    <!-- Product Condition -->
                     <div class="form-group">
                         <label for="product_condition">Product Condition</label>
                         <select class="form-control" id="product_condition" name="product_condition" required>
@@ -51,11 +53,19 @@
                         </select>
                     </div>
 
+                    <!-- Defect Reason (conditionally shown when "Defective" is selected) -->
                     <div class="form-group" id="defect_reason_group" style="display:none;">
                         <label for="defect_reason">Defect Reason</label>
                         <textarea class="form-control" id="defect_reason" name="defect_reason" rows="3"></textarea>
                     </div>
 
+                    <!-- Quantity to Update -->
+                    <div class="form-group">
+                        <label for="quantity_to_update">Quantity</label>
+                        <input type="number" class="form-control" id="quantity_to_update" name="quantity_to_update" required min="1">
+                    </div>
+
+                    <!-- Submit Button -->
                     <button type="submit" class="btn btn-primary">Update Status</button>
                     <a href="/view-product-batches/" class="btn btn-secondary">Back to Batches</a>
                 </form>
@@ -65,6 +75,7 @@
 </main>
 
 <script>
+    // Show the defect reason field when "Defective" is selected
     document.getElementById("product_condition").addEventListener("change", function() {
         if (this.value === "Defective") {
             document.getElementById("defect_reason_group").style.display = "block";

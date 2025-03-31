@@ -29,7 +29,7 @@
                 <form method="POST">
                     <div class="form-group">
                         <label for="order_detail_id">Select Product</label>
-                        <select class="form-control" id="order_detail_id" name="order_detail_id" required>
+                        <select class="form-control selectpicker" id="order_detail_id" name="order_detail_id" required data-live-search="true">
                             <option value="" disabled selected>Select a product</option>
                             {% for order in order_details %}
                                 <option value="{{ order.order_detail_id }}">
@@ -48,6 +48,17 @@
                         <label for="category">Category</label>
                         <input type="text" class="form-control" id="category" name="category" required>
                     </div>
+
+                    <div class="form-group">
+                        <label for="material_ids">Select Materials</label>
+                        <select class="form-control selectpicker" id="material_ids" name="material_ids" multiple required data-live-search="true">
+                            {% for material in imports %}
+                                <option value="{{ material.import_id }}">{{ material.material_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <br>
 
                     <button type="submit" class="btn btn-primary">Add Batch</button>
                     <a href="/view-product-batches/" class="btn btn-secondary">Back to Batches</a>
