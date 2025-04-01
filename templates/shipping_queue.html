@@ -39,6 +39,9 @@
                                 <td>{{ item.status }}</td>
                                 <td>
                                     <a href="{{ url_for('create_shipping_order', order_id=item.order_id) }}" class="btn btn-primary">Create Shipping Order</a>
+                                    <form action="{{ url_for('delete_shipping_queue', shipping_queue_id=item.shipping_queue_id) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this item from the shipping queue?')">Delete</button>
+                                    </form>
                                 </td>
                             </tr>
                         {% endfor %}

@@ -44,7 +44,7 @@ product_batch_materials = db.Table('product_batch_materials',
 )
 class Import(db.Model):
     __tablename__ = 'imports'
-    import_id = db.Column(db.Integer, primary_key=True)
+    import_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     
     # Material info
     material_name = db.Column(db.String(255), nullable=False)
@@ -60,6 +60,7 @@ class Import(db.Model):
     status = db.Column(db.String(50), default="Supplied")
     section_name = db.Column(db.String(255))  # Section name for classification
     category = db.Column(db.String(255))  # Category of the material
+   
 
 
     def __repr__(self):
@@ -73,6 +74,7 @@ class Order(db.Model):
     cus_address = db.Column(db.String(255), nullable=False)  # Customer Address
     order_date = db.Column(db.DateTime, default=vietnam_now)
     price = db.Column(db.Numeric(10, 2), nullable=False)
+    deposit_amount = db.Column(db.Float, nullable=False, default=0.0)
 
     order_details = db.relationship('OrderDetail', backref='order_relation', lazy=True)
 
@@ -93,6 +95,7 @@ class Inventory(db.Model):
     # Relationship to Import (Material)
     import_data = db.relationship('Import', backref='inventory_records', lazy=True)
     category = db.Column(db.String(255))
+    warehouse=db.Column(db.String(255))
 
     def __repr__(self):
         return f'<Inventory {self.product_name}>'
@@ -239,14 +242,25 @@ def view_inventory():
     imports = Import.query.all()
     return render_template("inventory.html", inventory=inventory, imports=imports,low_stock_items=low_stock_items )
 
+@app.route('/classify-warehouse/<int:inventory_id>', methods=["POST"])
+def classify_warehouse(inventory_id):
+    inventory_item = Inventory.query.get_or_404(inventory_id)
+    warehouse = request.form.get('warehouse')  # Lấy warehouse từ form
+    inventory_item.warehouse = warehouse  # Cập nhật warehouse cho item
+    db.session.commit()  # Lưu thay đổi vào cơ sở dữ liệu
+    flash(f"Material {inventory_item.product_name} classified as {warehouse}.", "success")
+    return redirect(url_for('view_inventory'))
+
+
 @app.route('/classify-material/<int:inventory_id>', methods=["POST"])
 def classify_material(inventory_id):
     inventory_item = Inventory.query.get_or_404(inventory_id)
     category = request.form.get('category')
-    inventory_item.category = category
+    inventory_item.category = category  # Update the category in the database
     db.session.commit()
     flash(f"Material {inventory_item.product_name} classified as {category}.", "success")
     return redirect(url_for('view_inventory'))
+
 
 @app.route('/delete-inventory/<int:inventory_id>', methods=["POST"])
 def delete_inventory(inventory_id):
@@ -265,17 +279,39 @@ def delete_inventory(inventory_id):
     return redirect(url_for('view_inventory'))  # Redirect back to the inventory page
 
 
+@app.route('/create_purchase_request/<int:import_id>', methods=["GET", "POST"])
+def create_purchase_request(import_id):
+    import_request = Import.query.get_or_404(import_id)
+    inventory=Inventory.query.get_or_404(import_id)
 
-@app.route('/add-import/', methods=["GET", "POST"])
-def add_import():
+    # Kiểm tra nếu số lượng còn thiếu và nhỏ hơn reorder level
+    if inventory.quantity < import_request.reorder_level:
+        # Tính toán số lượng cần nhập
+        quantity_needed = import_request.reorder_level - inventory.quantity
+
+        # Chuyển hướng đến trang add-import với các thông tin cần thiết đã được điền sẵn
+        return redirect(url_for('add_imports', 
+                                material_name=import_request.material_name, 
+                                material_description=import_request.material_description,
+                                reorder_level=import_request.reorder_level,
+                                quantity_needed=quantity_needed,
+                                sup_name=import_request.sup_name,
+                                sup_contact_info=import_request.sup_contact_info,
+                                sup_address=import_request.sup_address   ))
+
+    flash("Stock level is sufficient. No purchase request needed.", "info")
+    return redirect(url_for('view_inventory'))
+
+@app.route('/add-imports/', methods=["GET", "POST"])
+def add_imports():
     if request.method == "POST":
         material_name = request.form["material_name"]
-        
+
         # Kiểm tra xem material_name đã tồn tại trong cơ sở dữ liệu chưa
-        existing_material = Import.query.filter_by(material_name=material_name).first()
-        if existing_material:
-            flash("Material name already exists. Please choose a different name.", "danger")
-            return render_template("add-import.html")
+        # existing_material = Import.query.filter_by(material_name=material_name).first()
+        # if existing_material:
+        #     flash("Material name already exists. Please choose a different name.", "danger")
+        #     return render_template("add-imports.html")
 
         material_description = request.form.get("material_description", "")
         quantity_in_stock = int(request.form.get("quantity_in_stock", 0))
@@ -294,7 +330,68 @@ def add_import():
             sup_name=sup_name,
             sup_contact_info=sup_contact_info,
             sup_address=sup_address,
-            status="Wait"
+            status="Supplied"
+        )
+
+        try:
+            db.session.add(new_import)
+            db.session.commit()
+            flash("Import added successfully!", "success")
+            return redirect(url_for('view_import'))  # Redirect to the page showing imports
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error adding import: {str(e)}", "danger")
+
+    # Get the pre-filled values from the query string
+    material_name = request.args.get('material_name')
+    material_description = request.args.get('material_description')
+    reorder_level = request.args.get('reorder_level', type=int, default=10)
+    quantity_needed = request.args.get('quantity_needed', type=int, default=0)
+    sup_name=request.args.get('sup_name')
+    sup_contact_info=request.args.get('sup_contact_info')
+    sup_address=request.args.get('sup_address')
+
+    return render_template("add-imports.html", 
+                           material_name=material_name, 
+                           material_description=material_description,
+                           reorder_level=reorder_level, 
+                           prefilled_quantity=quantity_needed,
+                           sup_address=sup_address,
+                           sup_contact_info=sup_contact_info,
+                           sup_name=sup_name                           
+                           )
+
+
+
+@app.route('/add-import/', methods=["GET", "POST"])
+def add_import():
+    if request.method == "POST":
+        material_name = request.form["material_name"]
+        
+        # Kiểm tra xem material_name đã tồn tại trong cơ sở dữ liệu chưa
+        # existing_material = Import.query.filter_by(material_name=material_name).first()
+        # if existing_material:
+        #     flash("Material name already exists. Please choose a different name.", "danger")
+        #     return render_template("add-import.html")
+
+        material_description = request.form.get("material_description", "")
+        quantity_in_stock = int(request.form.get("quantity_in_stock", 0))
+        reorder_level = int(request.form.get("reorder_level", 10))
+        
+        sup_name = request.form["sup_name"]
+        sup_contact_info = request.form["sup_contact_info"]
+        sup_address = request.form["sup_address"]
+
+        # Create a new Import record
+        new_import = Import(
+            material_name=material_name,
+            material_description=material_description,
+            quantity_in_stock=quantity_in_stock,
+            reorder_level=reorder_level,
+            sup_name=sup_name,
+            sup_contact_info=sup_contact_info,
+            sup_address=sup_address,
+            status="Supplied"
         )
 
         try:
@@ -317,25 +414,30 @@ def update_import_status(import_id):
     if import_record.status == "Supplied":
         import_record.status = "Success"
 
-        new_inventory_item = Inventory(
+        # Check if the material already exists in the inventory
+        existing_inventory_item = Inventory.query.filter_by(product_name=import_record.material_name).first()
+
+        if existing_inventory_item:
+            # If the material exists, update the quantity in inventory
+            existing_inventory_item.quantity += import_record.quantity_in_stock
+            flash(f"Material {import_record.material_name} quantity updated in inventory.", "success")
+        else:
+            # If the material doesn't exist, create a new inventory item
+            new_inventory_item = Inventory(
                 product_name=import_record.material_name,
                 quantity=import_record.quantity_in_stock,
                 transaction_type="Addition",  # Thêm vào kho
                 import_id=import_record.import_id,
-                
             )
+            db.session.add(new_inventory_item)
+            flash(f"New material {import_record.material_name} added to inventory.", "success")
 
         try:
-                db.session.add(new_inventory_item)
-                db.session.commit()
-                flash("Import status updated and material added to inventory.", "success")
+            db.session.commit()
         except Exception as e:
-                db.session.rollback()
-                flash(f"Error updating status or adding to inventory: {str(e)}", "danger")
+            db.session.rollback()
+            flash(f"Error updating status or adding to inventory: {str(e)}", "danger")
 
-        
-       
-        
     else:
         flash("The import is already marked as 'Success'.", "warning")
 
@@ -455,13 +557,21 @@ def add_order():
         else:
             order_date = vietnam_now.strptime(order_date_str, '%Y-%m-%dT%H:%M')
 
+        # Retrieve deposit percentage from the form
+        deposit_percent = request.form.get("deposit_percent", 0)
+        deposit_percent = float(deposit_percent)  # Ensure it's a float
+
+        # Calculate deposit amount based on the price and deposit percentage
+        deposit_amount = (price * deposit_percent) / 100
+
         # Create new order record
         new_order = Order(
             cus_name=cus_name,
             cus_contact=cus_contact,
             cus_address=cus_address,
             price=price,
-            order_date=order_date
+            order_date=order_date,
+            deposit_amount=deposit_amount  # Store deposit amount in the order record
         )
         db.session.add(new_order)
         db.session.commit()
@@ -510,7 +620,11 @@ def add_order():
 
 @app.template_filter('format_price')
 def format_price(value):
-    return "${:,.2f}".format(value)
+    try:
+        # Format the price as currency (e.g., 1,000,000.00)
+        return "{:,.2f}".format(value)
+    except (ValueError, TypeError):
+        return value
 
 
 @app.route('/order/', methods=["GET", "POST"])
@@ -618,55 +732,6 @@ def deposit_confirm():
         return redirect(url_for('deposit_confirm', order_id=order.order_id))  # Redirect to order details page
 
     return render_template("deposit_confirm.html")
-
-
-
-@app.route('/create_purchase_request/<int:import_id>', methods=["GET", "POST"])
-def create_purchase_request(import_id):
-    # Fetch the import record using import_id
-    import_request = Import.query.get_or_404(import_id)
-
-    # Check if stock is below reorder level
-    if import_request.quantity_in_stock < import_request.reorder_level:
-        if request.method == "POST":
-            # Get the quantity to order from form input
-            quantity_to_order = request.form.get("quantity", type=int)
-            
-            # Ensure quantity is valid
-            if quantity_to_order and quantity_to_order > 0:
-                try:
-                    # Create a new purchase request
-                    new_purchase_request = PurchaseRequest(
-                        import_id=import_request.import_id,
-                        quantity_requested=quantity_to_order,
-                        transaction_date=datetime.utcnow()
-                    )
-                    db.session.add(new_purchase_request)
-
-                    # Update the stock in import and Inventory
-                    import_request.quantity_in_stock += quantity_to_order
-
-                    # Also update the corresponding inventory
-                    inventory_record = Inventory.query.filter_by(import_id=import_request.import_id).first()
-                    if inventory_record:
-                        inventory_record.quantity += quantity_to_order  # Update inventory quantity as well
-
-                    # Commit the changes to both PurchaseRequest and Inventory
-                    db.session.commit()
-
-                    flash("Purchase request created and stock updated successfully.", "success")
-                    return redirect(url_for('view_inventory'))  # Redirect to inventory view
-
-                except Exception as e:
-                    db.session.rollback()  # Rollback on error
-                    flash(f"An error occurred: {str(e)}", "danger")
-            else:
-                flash("Invalid quantity! Please enter a valid quantity.", "danger")
-        
-        return render_template("create_purchase_request.html", import_request=import_request)
-
-    flash("Stock level is sufficient. No purchase request needed.", "info")
-    return redirect(url_for('view_inventory'))
 
 
 
@@ -800,7 +865,6 @@ def manufacturing_management():
     inventories = Inventory.query.all()
     return render_template('manufacturing_management.html', product_batches=product_batches, inventories=inventories)
 
-
 @app.route('/update-quantity-produced/<int:batch_id>', methods=["GET", "POST"])
 def update_quantity_produced(batch_id):
     product_batch = ProductBatch.query.get(batch_id)
@@ -824,7 +888,7 @@ def update_quantity_produced(batch_id):
             if inventory_record and inventory_record.quantity >= quantity_to_update:
                 # Trừ số lượng trong kho và bản ghi nhập
                 inventory_record.quantity -= quantity_to_update
-                import_record.quantity_in_stock -= quantity_to_update
+                
 
                 try:
                     db.session.commit()
@@ -846,6 +910,28 @@ def update_quantity_produced(batch_id):
             product_batch.manufacturing_status = "Completed"
             db.session.commit()
             flash("Complete Product! Manufacturing status set to 'Completed'.", 'success')
+
+        # Now handle "Ready for Shipping"
+        if total_produced >= order_detail.quantity:
+            product_batch.manufacturing_status = "Ready for Shipping"
+            db.session.commit()
+
+            # Now move all the produced quantity (from all batches) to shipping queue
+            total_quantity_for_shipping = sum(batch.quantity_completed for batch in order_detail.product_batches)
+
+            shipping_queue_item = ShippingQueue(
+                order_id=product_batch.order_detail.order_id,
+                batch_id=product_batch.batch_id,
+                product_name=product_batch.order_detail.product_name,
+                quantity=total_quantity_for_shipping,
+                status="Pending"  # Initial status for shipping
+            )
+            db.session.add(shipping_queue_item)
+            db.session.commit()
+
+            flash(f"Product moved to shipping queue for Order #{product_batch.order_detail.order_id}", 'success')
+            return redirect(url_for('shipping_queue_list'))  # Redirect to the shipping queue list page
+
         else:
             remaining_quantity = order_detail.quantity - total_produced
             flash(f"Remaining quantity to produce: {remaining_quantity}. Creating new batch...", 'warning')
@@ -871,6 +957,7 @@ def update_quantity_produced(batch_id):
             return redirect(url_for('view_product_batches'))  # Quay lại trang quản lý sản xuất
 
     return render_template('view_product_batches.html', product_batch=product_batch)
+
 
 
 @app.route('/shipping-queue/', methods=["GET"])
@@ -921,56 +1008,6 @@ def create_shipping_order(order_id):
 def generate_tracking_code():
     length = 10
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
-
-# @app.route('/create-shipping-order/<int:order_id>', methods=["GET", "POST"])
-# def create_shipping_order(order_id):
-#     # Fetch the order from the database
-#     order = Order.query.get_or_404(order_id)
-    
-#     # Check if the order has already been shipped or has a shipping status other than "Pending"
-#     # Access the first shipping record if it exists
-#     if order.shipping_details:
-#         shipping_record = order.shipping_details[0]  # Get the first shipping record
-#         if shipping_record.shipping_status != "Pending":
-#             flash("This order has already been shipped or is not in pending status. It cannot be shipped again.", "danger")
-#             return redirect(url_for('view_shipping', shipping_id=shipping_record.shipping_id))
-
-#     if request.method == "POST":
-#         provider = request.form['provider']
-#         shipping_cost = request.form.get('shipping_cost', type=float)
-
-#         # Validate shipping cost
-#         if shipping_cost is None or shipping_cost <= 0:
-#             flash("Shipping cost must be a positive value.", "danger")
-#             return redirect(url_for('create_shipping_order', order_id=order_id))
-
-#         # Generate a unique tracking code
-#         tracking_code = generate_tracking_code()
-
-#         # Check if the tracking code already exists, if it does, regenerate it
-#         while Shipping.query.filter_by(tracking_code=tracking_code).first():
-#             tracking_code = generate_tracking_code()
-
-#         # Create shipping order
-#         shipping = Shipping(
-#             order_id=order_id,
-#             provider=provider,
-#             tracking_code=tracking_code,
-#             shipping_cost=shipping_cost,
-#             shipping_status="Pending"
-#         )
-
-#         try:
-#             db.session.add(shipping)
-#             db.session.commit()
-#             flash(f"Shipping order created for Order #{order_id} with tracking code {tracking_code}.", 'success')
-#             return redirect(url_for('view_shipping', shipping_id=shipping.shipping_id))
-#         except Exception as e:
-#             db.session.rollback()
-#             flash(f"Error creating shipping order: {str(e)}", 'danger')
-    
-#     # Render the template and pass the order object
-#     return render_template('create_shipping_order.html', order=order)
 
 @app.route('/confirm-shipping-payment/<int:shipping_id>', methods=["POST", "GET"])
 def confirm_shipping_payment(shipping_id):
@@ -1042,6 +1079,23 @@ def cancel_shipping(shipping_id):
 
     # Redirect to the shipping details page
     return redirect(url_for('view_shipping', shipping_id=shipping_id))
+
+@app.route('/delete-shipping-queue/<int:shipping_queue_id>', methods=["POST"])
+def delete_shipping_queue(shipping_queue_id):
+    # Fetch the shipping queue item from the database
+    shipping_queue_item = ShippingQueue.query.get_or_404(shipping_queue_id)
+
+    try:
+        # Delete the shipping queue item from the database
+        db.session.delete(shipping_queue_item)
+        db.session.commit()
+        flash(f"Shipping queue item #{shipping_queue_id} deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback()  # Rollback if there's an error
+        flash(f"Error deleting shipping queue item: {str(e)}", "danger")
+
+    # Redirect back to the shipping queue list page after deletion
+    return redirect(url_for('shipping_queue_list'))
 
 
 

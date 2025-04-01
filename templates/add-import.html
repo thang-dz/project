@@ -8,35 +8,43 @@
 <main>
     <div class="container-fluid">
         <h1 class="mt-4">Add New Import</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item active">Add Import</li>
+        </ol>
 
-        <!-- Form to Add New Import -->
-        <form id="product_form" action="/import/" method="POST" onsubmit="return checkMaterialName()">
-            <label for="material_name">Material Name</label>
-            <input type="text" id="material_name" name="material_name" class="form-control" required><br>
-
-            <label for="material_description">Material Description</label>
-            <input type="text" name="material_description" class="form-control"><br>
-
-            <label for="quantity_in_stock">Quantity</label>
-            <input type="number" name="quantity_in_stock" class="form-control" required><br>
-
-            <label for="reorder_level">Reorder Level</label>
-            <input type="number" name="reorder_level" class="form-control" value="10"><br>
-
-            <label for="sup_name">Supplier Name</label>
-            <input type="text" name="sup_name" class="form-control" required><br>
-
-            <label for="sup_contact_info">Supplier Phone Number</label>
-            <input type="number" name="sup_contact_info" class="form-control" required><br>
-
-            <label for="sup_address">Supplier Address</label>
-            <input type="text" name="sup_address" class="form-control" required><br>
-
-            <button type="submit" class="btn btn-primary">Add Import</button>
-        </form>
+        <div class="card mb-4">
+            <div class="card-header">New Import</div>
+            <div class="card-body">
+                <form id="product_form" action="/import/" method="POST" onsubmit="return checkMaterialName()">
+                    <label for="material_name">Material Name</label>
+                    <input type="text" id="material_name" name="material_name" class="form-control" required><br>
+        
+                    <!-- <label for="material_description">Material Description</label>
+                    <input type="text" name="material_description" class="form-control"><br> -->
+        
+                    <label for="quantity_in_stock">Quantity</label>
+                    <input type="number" name="quantity_in_stock" class="form-control" required><br>
+        
+                    <label for="reorder_level">Reorder Level</label>
+                    <input type="number" name="reorder_level" class="form-control" value="10"><br>
+        
+                    <label for="sup_name">Supplier Name</label>
+                    <input type="text" name="sup_name" class="form-control" required><br>
+        
+                    <label for="sup_contact_info">Supplier Phone Number</label>
+                    <input type="number" name="sup_contact_info" class="form-control" required><br>
+        
+                    <label for="sup_address">Supplier Address</label>
+                    <input type="text" name="sup_address" class="form-control" required><br>
+        
+                    <button type="submit" class="btn btn-primary">Add Import</button>
+                </form>
+                
+            </div>
+        </div>
     </div>
 </main>
-
 <script>
     function checkMaterialName(event) {
     const materialName = document.getElementById('material_name').value;
@@ -62,5 +70,4 @@
 }
 
 </script>
-
 {% endblock %}

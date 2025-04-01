@@ -7,7 +7,7 @@
  {% block content %}
  {% with messages = get_flashed_messages(with_categories=true) %}
     {% for item in inventory %}
-        {% if item.import_data.quantity_in_stock < item.import_data.reorder_level %}
+        {% if item.quantity < item.import_data.reorder_level %}
             <div class="alert alert-dismissible fixed-alert">
                 <div class="alert alert-warning">
                     {{ "Stock is low. Would you like to create a purchase request?" }}
@@ -45,13 +45,14 @@
             <div class="card mb-4">
                 <div class="card-header">Inventory List</div>
                 <div class="card-body">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" style="table-layout: fixed;">
                         <thead>
                             <tr>
                                 
                                 <th>Material Name</th>                                 
                                 <th>Material Quantity</th>                                
-                                <th>Date</th>
+                                <th>Stock-in Date</th>
+                                <th>Category</th>
                                 <th>WareHouse</th>
                                 <th>Actions</th>
                             </tr>
@@ -63,31 +64,50 @@
                                     <td>{{ item.import_data.material_name }}</td> <!-- Access Material Name from Import -->
                                    
                                     <td>                                        
-                                        {% if item.import_data.quantity_in_stock < item.import_data.reorder_level %}
-                                            <span class="text-danger">Stock data unavailable. Please update inventory records.</span>
+                                        {% if  item.quantity  < item.import_data.reorder_level %}
+                                            <span class="text-danger">Stock data unavailable (3). Please update inventory records.</span>
                                         {% else %}
-                                            {{ item.import_data.quantity_in_stock }} <!-- Display available stock -->
+                                            {{ item.quantity  }} <!-- Display available stock -->
                                         {% endif %}
                                     
                                     </td>
                                    
                                     <td>{{ item.transaction_date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
                                     <td>
-                                         {% if item.category is none %}
-                                            <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST">
-                                                <input type="text" name="category" placeholder="Enter " required>
+                                        {% if item.category is none %}
+                                            <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex flex-column align-items-start">
+                                                <select name="category" required class="form-control mb-2">
+                                                    <option value="fabric">Fabric</option>
+                                                    <option value="threads">Threads</option>
+                                                    <option value="buttons">Buttons</option>
+                                                    <option value="accessories">Accessories</option>
+                                                </select>
                                                 <button type="submit" class="btn btn-primary">Classify</button>
                                             </form>
                                         {% else %}
                                             {{ item.category }}
                                         {% endif %}
                                     </td>
+                                    
+                                    <td>
+                                        {% if item.warehouse is none %}
+                                            <form action="{{ url_for('classify_warehouse', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex flex-column align-items-start">
+                                                <input type="text" name="warehouse" placeholder="Enter" required class="form-control mb-2">
+                                                <button type="submit" class="btn btn-primary">Classify</button>
+                                            </form>
+                                        {% else %}
+                                            {{ item.warehouse }}
+                                        {% endif %}
+                                    </td>
+                                    
+                                    
+                                    
                                     <td>
                                         <form action="{{ url_for('delete_inventory', inventory_id=item.stockTran_id) }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this inventory item?')">Delete</button>
+                                            <button type="submit" class="btn btn-danger mb-2" onclick="return confirm('Are you sure you want to delete this inventory item?')">Delete</button>
                                         </form>
                                        
-                                        {% if item.import_data and item.import_data.quantity_in_stock < item.import_data.reorder_level %}
+                                        {% if item.import_data and item.quantity < item.import_data.reorder_level %}
                                             <a href="{{ url_for('create_purchase_request', import_id=item.import_data.import_id) }}" class="btn btn-primary">Create Purchase</a>
                                         {% endif %}
                                     </td>

@@ -29,10 +29,11 @@
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Batch Number</th>
-                            <th>Product Name</th>
                             <th>Order ID</th>
+                            <th>Product Name</th>
+                            <th>Batch Number</th>
+                            
+                            
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -40,10 +41,10 @@
                     <tbody>
                         {% for batch in product_batches %}
                             <tr>
-                                <td>{{batch.batch_id}}</td>
-                                <td>{{ batch.batch_number }}</td>
-                                <td>{{ batch.order_detail.product_name }}</td>
                                 <td>{{ batch.order_detail.order_id }}</td>
+                                <td>{{ batch.order_detail.product_name }}</td>
+                                <td>{{ batch.batch_number }}</td>                               
+                                
                                 <td>{{ batch.manufacturing_status }}</td>
                                 <td>
                                     {% if batch.manufacturing_status == "Completed" %}
