@@ -908,6 +908,11 @@ def update_quantity_produced(batch_id):
             db.session.commit()
             flash("Complete Product! Manufacturing status set to 'Completed'.", 'success')
 
+        # Check if the batch is already ready for shipping (No new batch creation)
+        if product_batch.manufacturing_status == "Ready for Shipping":
+            flash(f"Product batch {product_batch.batch_number} is already ready for shipping.", "warning")
+            return redirect(url_for('view_product_batches'))
+
         # Now handle "Ready for Shipping"
         if total_produced >= order_detail.quantity:
             product_batch.manufacturing_status = "Ready for Shipping"
@@ -927,32 +932,30 @@ def update_quantity_produced(batch_id):
             db.session.commit()
 
             flash(f"Product moved to shipping queue for Order #{product_batch.order_detail.order_id}", 'success')
-
-            return redirect(url_for('view_product_batches'))
+            return redirect(url_for('view_product_batches'))  # Redirect to the shipping queue list page
 
         else:
             remaining_quantity = order_detail.quantity - total_produced
             flash(f"Remaining quantity to produce: {remaining_quantity}. Creating new batch...", 'warning')
 
-            # Tạo một batch mới (batch number mới)
-            new_batch_number = f"Batch-{batch_id+1}"  # Tạo batch number mới
-            new_product_batch = ProductBatch(
-                batch_number=new_batch_number,
-                order_detail_id=order_detail.order_detail_id,
-                manufacturing_status="In Production",  # Cập nhật trạng thái cho batch mới
-                quantity_completed=0,  # Batch mới bắt đầu với quantity = 0
-                transaction_date=vietnam_now()
-            )
-            db.session.add(new_product_batch)
-            db.session.commit()
-
-            # Cập nhật lại trạng thái sản xuất cho batch hiện tại nếu cần
-            if total_produced + remaining_quantity >= order_detail.quantity:
-                product_batch.manufacturing_status = "Completed"
+            # Ensure the new batch starts fresh and is associated with the new order
+            if product_batch.manufacturing_status != "Ready for Shipping":
+                # Tạo một batch mới (batch number mới)
+                # Start with Batch-1 for the new order, incrementing for each new batch for the same order
+                new_batch_number = f"Batch-{len(order_detail.product_batches) + 1}"  # Use order's batch count to increment
+                new_product_batch = ProductBatch(
+                    batch_number=new_batch_number,
+                    order_detail_id=order_detail.order_detail_id,
+                    manufacturing_status="In Production",  # Cập nhật trạng thái cho batch mới
+                    quantity_completed=0,  # Batch mới bắt đầu với quantity = 0
+                    transaction_date=vietnam_now()
+                )
+                db.session.add(new_product_batch)
                 db.session.commit()
-                flash("Complete Product with new batch!", 'success')
 
-            return redirect(url_for('view_product_batches'))  # Quay lại trang quản lý sản xuất
+                flash("New batch created!", 'success')
+
+                return redirect(url_for('view_product_batches'))  # Quay lại trang quản lý sản xuất
 
     return render_template('view_product_batches.html', product_batch=product_batch)
 
