@@ -40,7 +40,7 @@ def vietnam_now():
 
 product_batch_materials = db.Table('product_batch_materials',
     db.Column('product_batch_id', db.Integer, db.ForeignKey('product_batches.batch_id'), primary_key=True),
-    db.Column('import_id', db.Integer, db.ForeignKey('imports.import_id'), primary_key=True)
+    db.Column('inventory_id', db.Integer, db.ForeignKey('inventory.stockTran_id'), primary_key=True)
 )
 class Import(db.Model):
     __tablename__ = 'imports'
@@ -150,7 +150,7 @@ class ProductBatch(db.Model):
     transaction_date = db.Column(db.DateTime, default=vietnam_now)
     quantity_to_update=db.Column(db.Integer, default=0)
 
-    imports = db.relationship('Import', secondary=product_batch_materials, backref='product_batches')
+    inventory = db.relationship('Inventory', secondary=product_batch_materials, backref='product_batches')
     
 
     def __repr__(self):
@@ -738,7 +738,7 @@ def deposit_confirm():
 @app.route('/add-product-batch/', methods=["GET", "POST"])
 def add_product_batch():
     order_details = OrderDetail.query.all()
-    imports = Import.query.all()  # Get all materials (imports)
+    inventory = Inventory.query.all()
 
     if request.method == "POST":
         order_detail_id = request.form['order_detail_id']
@@ -761,9 +761,9 @@ def add_product_batch():
 
         # Link materials to the batch (many-to-many relationship)
         for material_id in material_ids:
-            import_data = Import.query.get(material_id)
+            import_data = Inventory.query.get(material_id)
             if import_data:
-                new_batch.imports.append(import_data)  # Use the `imports` relationship
+                new_batch.inventory.append(import_data)  # Use the `imports` relationship
 
         try:
             db.session.add(new_batch)
@@ -774,7 +774,7 @@ def add_product_batch():
             db.session.rollback()
             flash(f"Error: {str(e)}", 'danger')
 
-    return render_template('add_product_batch.html', order_details=order_details, imports=imports)
+    return render_template('add_product_batch.html', order_details=order_details, inventory=inventory)
 
 
 @app.route('/delete-product-batch/<int:batch_id>', methods=["POST"])
@@ -882,13 +882,10 @@ def update_quantity_produced(batch_id):
         product_batch.quantity_completed = quantity_to_update  # Update quantity_completed with the new value
 
         # Cập nhật số lượng trong kho (trừ số lượng tương ứng từ kho)
-        for import_record in product_batch.imports:
-            inventory_record = Inventory.query.filter_by(import_id=import_record.import_id).first()
-
-            if inventory_record and inventory_record.quantity >= quantity_to_update:
+        for inventory_record in product_batch.inventory:  # Many-to-many relationship now
+            if inventory_record.quantity >= quantity_to_update:
                 # Trừ số lượng trong kho và bản ghi nhập
                 inventory_record.quantity -= quantity_to_update
-                
 
                 try:
                     db.session.commit()
@@ -898,7 +895,7 @@ def update_quantity_produced(batch_id):
                     flash(f"Error updating inventory: {str(e)}", 'danger')
                     return redirect(url_for('view_product_batches'))
             else:
-                flash(f"Not enough stock in inventory for material: {import_record.material_name}.", 'danger')
+                flash(f"Not enough stock in inventory for material: {inventory_record.product_name}.", 'danger')
                 return redirect(url_for('view_product_batches'))
 
         # Tính tổng số sản phẩm đã sản xuất (tổng tất cả các batch)
@@ -930,7 +927,8 @@ def update_quantity_produced(batch_id):
             db.session.commit()
 
             flash(f"Product moved to shipping queue for Order #{product_batch.order_detail.order_id}", 'success')
-            return redirect(url_for('shipping_queue_list'))  # Redirect to the shipping queue list page
+
+            return redirect(url_for('view_product_batches'))
 
         else:
             remaining_quantity = order_detail.quantity - total_produced
@@ -953,10 +951,11 @@ def update_quantity_produced(batch_id):
                 product_batch.manufacturing_status = "Completed"
                 db.session.commit()
                 flash("Complete Product with new batch!", 'success')
-            
+
             return redirect(url_for('view_product_batches'))  # Quay lại trang quản lý sản xuất
 
     return render_template('view_product_batches.html', product_batch=product_batch)
+
 
 
 
