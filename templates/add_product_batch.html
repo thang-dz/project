@@ -29,7 +29,7 @@
                 <form method="POST">
                     <!-- Select Product -->
                     <div class="form-group">
-                        <label for="order_detail_id">Select Product</label>
+                        <label for="order_detail_id">Select Product <span class="text-danger">*</span></label>
                         <select class="form-control selectpicker" id="order_detail_id" name="order_detail_id" required data-live-search="true">
                             <option value="" disabled selected>Select a product</option>
                             {% for order in order_details %}
@@ -42,19 +42,19 @@
 
                     <!-- Batch Number -->
                     <div class="form-group">
-                        <label for="batch_number">Batch Number</label>
+                        <label for="batch_number">Batch Number <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="batch_number" name="batch_number" required>
                     </div>
 
                     <!-- Category -->
                     <div class="form-group">
-                        <label for="category">Category</label>
+                        <label for="category">Category <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="category" name="category" required>
                     </div>
 
                     <!-- Select Materials from Inventory -->
                     <div class="form-group">
-                        <label for="material_ids">Select Materials</label>
+                        <label for="material_ids">Select Materials <span class="text-danger">*</span></label>
                         <select class="form-control selectpicker" id="material_ids" name="material_ids" multiple required data-live-search="true">
                             {% for item in inventory %}
                                 <option value="{{ item.stockTran_id }}">{{ item.product_name }}</option>  <!-- Access product_name from Inventory -->

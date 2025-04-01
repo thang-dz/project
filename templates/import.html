@@ -61,7 +61,7 @@
                                         <form action="{{ url_for('delete_import', import_id=import_record.import_id) }}" method="POST" style="display:inline;">
                                             <button type="submit" class="btn btn-danger mb-2" onclick="return confirm('Are you sure you want to delete this import item?')">Delete</button>
                                         </form>
-                                        {% if import_record.status == 'Supplied' %}
+                                        {% if import_record.status == 'Supplying' %}
                                         <br>
                                         
 

@@ -17,25 +17,25 @@
             <div class="card-header">New Import</div>
             <div class="card-body">
                 <form id="product_form" action="/import/" method="POST" onsubmit="return checkMaterialName()">
-                    <label for="material_name">Material Name</label>
+                    <label for="material_name">Material Name <span class="text-danger">*</span></label>
                     <input type="text" id="material_name" name="material_name" class="form-control" required><br>
         
                     <!-- <label for="material_description">Material Description</label>
                     <input type="text" name="material_description" class="form-control"><br> -->
         
-                    <label for="quantity_in_stock">Quantity</label>
+                    <label for="quantity_in_stock">Quantity <span class="text-danger">*</span></label>
                     <input type="number" name="quantity_in_stock" class="form-control" required><br>
         
                     <label for="reorder_level">Reorder Level</label>
                     <input type="number" name="reorder_level" class="form-control" value="10"><br>
         
-                    <label for="sup_name">Supplier Name</label>
+                    <label for="sup_name">Supplier Name <span class="text-danger">*</span></label>
                     <input type="text" name="sup_name" class="form-control" required><br>
         
-                    <label for="sup_contact_info">Supplier Phone Number</label>
+                    <label for="sup_contact_info">Supplier Phone Number <span class="text-danger">*</span></label>
                     <input type="number" name="sup_contact_info" class="form-control" required><br>
         
-                    <label for="sup_address">Supplier Address</label>
+                    <label for="sup_address">Supplier Address <span class="text-danger">*</span></label>
                     <input type="text" name="sup_address" class="form-control" required><br>
         
                     <button type="submit" class="btn btn-primary">Add Import</button>
