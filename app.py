@@ -50,7 +50,7 @@ class Import(db.Model):
     material_name = db.Column(db.String(255), nullable=False)
     material_description = db.Column(db.String(255))
     quantity_in_stock = db.Column(db.Integer, default=0)
-    reorder_level = db.Column(db.Integer, default=10)
+    reorder_level = db.Column(db.Integer, default=30)
     
     # Supplier info
     sup_name = db.Column(db.String(255), nullable=False)
@@ -278,11 +278,10 @@ def delete_inventory(inventory_id):
 
     return redirect(url_for('view_inventory'))  # Redirect back to the inventory page
 
-
 @app.route('/create_purchase_request/<int:import_id>', methods=["GET", "POST"])
 def create_purchase_request(import_id):
     import_request = Import.query.get_or_404(import_id)
-    inventory=Inventory.query.get_or_404(import_id)
+    inventory = Inventory.query.get_or_404(import_id)
 
     # Kiểm tra nếu số lượng còn thiếu và nhỏ hơn reorder level
     if inventory.quantity < import_request.reorder_level:
@@ -291,16 +290,17 @@ def create_purchase_request(import_id):
 
         # Chuyển hướng đến trang add-import với các thông tin cần thiết đã được điền sẵn
         return redirect(url_for('add_imports', 
-                                material_name=import_request.material_name, 
+                                material_name=inventory.product_name,  # Sử dụng product_name từ Inventory
                                 material_description=import_request.material_description,
                                 reorder_level=import_request.reorder_level,
                                 quantity_needed=quantity_needed,
                                 sup_name=import_request.sup_name,
                                 sup_contact_info=import_request.sup_contact_info,
-                                sup_address=import_request.sup_address   ))
+                                sup_address=import_request.sup_address))
 
     flash("Stock level is sufficient. No purchase request needed.", "info")
     return redirect(url_for('view_inventory'))
+
 
 @app.route('/add-imports/', methods=["GET", "POST"])
 def add_imports():
@@ -315,7 +315,7 @@ def add_imports():
 
         material_description = request.form.get("material_description", "")
         quantity_in_stock = int(request.form.get("quantity_in_stock", 0))
-        reorder_level = int(request.form.get("reorder_level", 10))
+        reorder_level = int(request.form.get("reorder_level", 30))
         
         sup_name = request.form["sup_name"]
         sup_contact_info = request.form["sup_contact_info"]
@@ -345,7 +345,7 @@ def add_imports():
     # Get the pre-filled values from the query string
     material_name = request.args.get('material_name')
     material_description = request.args.get('material_description')
-    reorder_level = request.args.get('reorder_level', type=int, default=10)
+    reorder_level = request.args.get('reorder_level', type=int, default=30)
     quantity_needed = request.args.get('quantity_needed', type=int, default=0)
     sup_name=request.args.get('sup_name')
     sup_contact_info=request.args.get('sup_contact_info')
@@ -376,7 +376,7 @@ def add_import():
 
         material_description = request.form.get("material_description", "")
         quantity_in_stock = int(request.form.get("quantity_in_stock", 0))
-        reorder_level = int(request.form.get("reorder_level", 10))
+        reorder_level = int(request.form.get("reorder_level", 30))
         
         sup_name = request.form["sup_name"]
         sup_contact_info = request.form["sup_contact_info"]
@@ -453,7 +453,7 @@ def update_import(import_id):
         import_record.material_name = request.form['material_name']
         import_record.material_description = request.form.get('material_description', '')
         import_record.quantity_in_stock = int(request.form.get('quantity_in_stock', 0))
-        import_record.reorder_level = int(request.form.get('reorder_level', 10))
+        import_record.reorder_level = int(request.form.get('reorder_level', 30))
 
         import_record.sup_name = request.form['sup_name']
         import_record.sup_contact_info = request.form['sup_contact_info']
@@ -506,7 +506,7 @@ def view_import():
         material_name = request.form["material_name"]
         material_description = request.form.get("material_description", "")
         quantity_in_stock = int(request.form.get("quantity_in_stock", 0))
-        reorder_level = int(request.form.get("reorder_level", 10))
+        reorder_level = int(request.form.get("reorder_level", 30))
         
         sup_name = request.form["sup_name"]
         sup_contact_info = request.form["sup_contact_info"]

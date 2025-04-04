@@ -12,26 +12,26 @@
         <!-- Form to Update Import -->
         <form action="/update-import/{{ import_record.import_id }}" method="POST">
             <!-- Material Information -->
-            <label for="material_name" class="col-form-label">Material Name</label>
+            <label for="material_name" class="col-form-label">Material Name <span class="text-danger">*</span></label>
             <input type="text" name="material_name" class="form-control" value="{{ import_record.material_name }}" required><br>
 
-            <label for="material_description" class="col-form-label">Material Description</label>
-            <input type="text" name="material_description" class="form-control" value="{{ import_record.material_description }}"><br>
+            <!-- <label for="material_description" class="col-form-label">Material Description</label>
+            <input type="text" name="material_description" class="form-control" value="{{ import_record.material_description }}"><br> -->
 
-            <label for="quantity_in_stock" class="col-form-label">Quantity in Stock</label>
+            <label for="quantity_in_stock" class="col-form-label">Quantity in Stock <span class="text-danger">*</span></label>
             <input type="number" name="quantity_in_stock" class="form-control" value="{{ import_record.quantity_in_stock }}" required><br>
 
-            <label for="reorder_level" class="col-form-label">Reorder Level</label>
+            <label for="reorder_level" class="col-form-label">Reorder Level </label>
             <input type="number" name="reorder_level" class="form-control" value="{{ import_record.reorder_level }}"><br>
 
             <!-- Supplier Information -->
-            <label for="sup_name" class="col-form-label">Supplier Name</label>
+            <label for="sup_name" class="col-form-label">Supplier Name <span class="text-danger">*</span></label>
             <input type="text" name="sup_name" class="form-control" value="{{ import_record.sup_name }}" required><br>
 
-            <label for="sup_contact_info" class="col-form-label">Supplier Contact Info</label>
+            <label for="sup_contact_info" class="col-form-label">Supplier Contact Info <span class="text-danger">*</span></label>
             <input type="text" name="sup_contact_info" class="form-control" value="{{ import_record.sup_contact_info }}" required><br>
 
-            <label for="sup_address" class="col-form-label">Supplier Address</label>
+            <label for="sup_address" class="col-form-label">Supplier Address <span class="text-danger">*</span></label>
             <input type="text" name="sup_address" class="form-control" value="{{ import_record.sup_address }}" required><br>
 
             <button type="submit" class="btn btn-primary">Update Import</button>

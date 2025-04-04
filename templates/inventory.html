@@ -108,7 +108,7 @@
                                         </form>
                                        
                                         {% if item.import_data and item.quantity < item.import_data.reorder_level %}
-                                            <a href="{{ url_for('create_purchase_request', import_id=item.import_data.import_id) }}" class="btn btn-primary">Create Purchase</a>
+                                            <a href="{{ url_for('create_purchase_request', import_id=item.stockTran_id) }}" class="btn btn-primary">Create Purchase</a>
                                         {% endif %}
                                     </td>
                                 </tr>
