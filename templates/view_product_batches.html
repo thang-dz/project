@@ -34,10 +34,10 @@
                         <tr>
                             
                             <th>Order ID</th>
-                            <th>Product Name</th>
-                            <th>Batch Number</th>                            
-                            <th>Manufacturing Status</th>
-                            <th>Quantity Producted</th>
+                            <th>Product </th>
+                            <th>Batch </th>                            
+                            <th> Status</th>
+                            <th>Quantity </th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -63,9 +63,19 @@
                                 
                                 <td>{{ batch.transaction_date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                                 <td>                                   
-                                <form action="{{  url_for('delete_product_batch', batch_id=batch.batch_id)}}" method="POST" style="display:inline;">
+                                    <form action="{{  url_for('delete_product_batch', batch_id=batch.batch_id)}}" method="POST" style="display:inline;">
                                         <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this item?')">Delete</button>
                                     </form>
+
+                                    {% if batch.manufacturing_status == 'Complete' %}
+                                        <!-- Display "Ship" button only if the status is "Completed" and not "Processing" -->
+                                        <form method="POST" action="{{ url_for('ship_product_batch', batch_id=batch.batch_id) }}">
+                                            <button type="submit" class="btn btn-primary">Ship</button>
+                                        </form>
+                                    {% endif %}
+
+
+
                                 </td>
                                 
                             </tr>

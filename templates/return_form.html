@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Request Form</title>
+</head>
+<body>
+    <h1>Create Return Request</h1>
+    <form action="{{ url_for('create_return') }}" method="POST">
+        <label for="order_detail_id">Order Detail ID:</label>
+        <input type="text" id="order_detail_id" name="order_detail_id" required>
+        
+        <label for="condition">Condition:</label>
+        <select name="condition" id="condition" required>
+            <option value="Good">Good</option>
+            <option value="Defective">Defective</option>
+            <option value="Requires Repair">Requires Repair</option>
+        </select>
+
+        <div id="defective-reason" style="display: none;">
+            <label for="defect_reason">Defect Reason:</label>
+            <input type="text" id="defect_reason" name="defect_reason">
+        </div>
+
+        <div id="repair-time" style="display: none;">
+            <label for="repair_time">Estimated Repair Time (days):</label>
+            <input type="number" id="repair_time" name="repair_time" value="3">
+        </div>
+
+        <button type="submit">Submit Return Request</button>
+    </form>
+
+    <script>
+        const conditionSelect = document.getElementById('condition');
+        const defectReasonDiv = document.getElementById('defective-reason');
+        const repairTimeDiv = document.getElementById('repair-time');
+
+        conditionSelect.addEventListener('change', function () {
+            if (conditionSelect.value === 'Defective') {
+                defectReasonDiv.style.display = 'block';
+                repairTimeDiv.style.display = 'none';
+            } else if (conditionSelect.value === 'Requires Repair') {
+                repairTimeDiv.style.display = 'block';
+                defectReasonDiv.style.display = 'none';
+            } else {
+                defectReasonDiv.style.display = 'none';
+                repairTimeDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

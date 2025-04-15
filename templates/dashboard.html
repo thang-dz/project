@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Inventory Management Dashboard</title>
+{% endblock %}
+
+{% block content %}
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Business Dashboard</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+
+        <!-- First row: Sales Revenue Trend and Order Status Distribution Charts -->
+        <div class="row">
+            <div class="col-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-line mr-1"></i> Sales Revenue Trends
+                    </div>
+                    <div class="card-body">
+                        <canvas id="salesChart" class="chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie mr-1"></i> Order Status Distribution
+                    </div>
+                    <div class="card-body">
+                        <canvas id="orderStatusChart" class="chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-cogs mr-1"></i> Top 3 Best-Selling Products
+                    </div>
+                    <div class="card-body">
+                        <canvas id="topProductsChart" class="chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- JavaScript: Chart.js integration -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Sales Revenue Trend Chart (Bar and Line Chart)
+    var allMonths = [
+        "01", "02", "03", "04", "05", "06", "07", 
+        "08", "09", "10", "11", "12"
+    ];
+
+    var salesData = {{ sales_data | tojson }};  // Sales data from Django context
+
+    var sales = allMonths.map(function(month) {
+        var monthData = salesData.find(function(item) { 
+            return item.month === month; 
+        });
+        return monthData ? monthData.total_sales : 0;  // Default to 0 if no data exists for a month
+    });
+
+    var ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',  // Bar chart for sales revenue
+        data: {
+            labels: allMonths,  // Months as labels
+            datasets: [
+                {
+                    label: 'Sales Revenue (Bar)',
+                    data: sales,
+                    backgroundColor: 'rgba(138, 43, 226, 0.6)',  // Purple for bars
+                    borderColor: 'rgb(138, 43, 226)',
+                    borderWidth: 1,
+                    barPercentage: 0.5,  // Control bar width
+                    categoryPercentage: 0.5
+                },
+                {
+                    label: 'Sales Revenue (Line)',
+                    data: sales,
+                    borderColor: 'rgb(75, 0, 130)',  // Purple for the line
+                    fill: false,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 5,
+                    pointBackgroundColor: 'rgb(75, 0, 130)',  // Purple for points
+                    order: 2,
+                    pointStyle: 'circle'
+                }
+            ]
+        },
+        options: {
+            responsive: true,  // Chart adjusts to the container size
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { borderColor: 'rgba(0, 0, 0, 0.1)', lineWidth: 1 }
+                },
+                x: {
+                    grid: { display: false }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { font: { family: 'Arial', size: 14 } }
+                }
+            }
+        }
+    });
+
+    // Order Status Distribution (Pie Chart)
+    var orderStatusData = {{ order_status_data | tojson }};  // Order status data from Django context
+    var statusLabels = orderStatusData.map(function(item) { return item.status; });
+    var statusCounts = orderStatusData.map(function(item) { return item.count; });
+
+    var ctx2 = document.getElementById('orderStatusChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'pie',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusCounts,
+                backgroundColor: ['#337357', '#6D9F71', '#FFDBE5']
+            }]
+        }
+    });
+
+    // Top 3 Best-Selling Products (Bar Chart)
+    var topProducts = {{ top_products | tojson }};  // Top products data from Django context
+    var productNames = topProducts.map(function(item) { return item.product_name; });
+    var quantities = topProducts.map(function(item) { return item.total_quantity; });
+
+    var ctx3 = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(ctx3, {
+        type: 'bar',
+        data: {
+            labels: productNames,
+            datasets: [{
+                label: 'Sales Volume',
+                data: quantities,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        }
+    });
+</script>
+
+<style>
+    .chart {
+        width: 100%;  /* Ensure the chart fills its container */
+        height: 300px; /* Adjust height for better visibility */
+    }
+</style>
+
+{% endblock %}

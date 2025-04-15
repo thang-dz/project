@@ -17,10 +17,10 @@
 {% endwith %}
 <main>
     <div class="container-fluid">
-        <h1 class="mt-4">Shipping Queue</h1>
+        <h1 class="mt-4">Shipping </h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item active">Shipping Queue</li>
+            <li class="breadcrumb-item active">Shipping </li>
         </ol>
         <a href="/shipping-list/" class="btn btn-success">Shipping List</a>
         <br><br><br>
@@ -32,8 +32,7 @@
                     <thead>
                         <tr>
                             <th>Order ID</th>
-                            <th>Product Name</th>
-                            
+                            <th>Product Name</th>                            
                             <th>Quantity</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -43,12 +42,11 @@
                         {% for item in shipping_queue_items %}
                             <tr>
                                 <td>{{ item.order_id }}</td>
-                                <td>{{ item.product_name }}</td>
-                                
+                                <td>{{ item.product_name }}</td>                                
                                 <td>{{ item.quantity }}</td>
                                 <td>{{ item.status }}</td>
                                 <td>
-                                    <a href="{{ url_for('create_shipping_order', order_id=item.order_id) }}" class="btn btn-primary">Create Shipping Order</a>
+                                    <a href="{{ url_for('create_shipping_order', order_id=item.order_id) }}" class="btn btn-primary">Create Ship</a>
                                     <form action="{{ url_for('delete_shipping_queue', shipping_queue_id=item.shipping_queue_id) }}" method="POST" style="display:inline;">
                                         <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this item from the shipping queue?')">Delete</button>
                                     </form>

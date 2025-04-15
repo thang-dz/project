@@ -16,59 +16,55 @@
         <div class="card mb-4">
             <div class="card-header">New Order</div>
             <div class="card-body">
-                <form method="POST" onsubmit="updateTotalPrice()">
+                <form method="POST" onsubmit="return updateTotalPrice(event)">
                     <!-- Customer Information -->
                     <label for="cus_name" class="col-form-label">Customer Name <span class="text-danger">*</span></label>
                     <input type="text" name="cus_name" id="cus_name" class="form-control" required>
                     <br>
-
+                
                     <label for="cus_contact" class="col-form-label">Customer Contact<span class="text-danger">*</span></label>
                     <input type="number" name="cus_contact" id="cus_contact" class="form-control" required>
                     <br>
-
+                
                     <label for="cus_address" class="col-form-label">Customer Address<span class="text-danger">*</span></label>
                     <input type="text" name="cus_address" id="cus_address" class="form-control" required>
                     <br>
-
+                
                     <!-- Product Information -->
                     <div id="product-fields">
                         <div class="product-field">
                             <label for="product_name" class="col-form-label">Product Name <span class="text-danger">*</span></label>
                             <input type="text" name="product_name[]" class="form-control" placeholder="Product Name" required>
                             <br>
-
+                
                             <label for="product_price" class="col-form-label">Product Price <span class="text-danger">*</span></label>
-                            <input type="number" name="product_price[]" class="form-control" min="0" placeholder="Product Price" required oninput="calculateTotalPrice()">
+                            <input type="number" name="product_price[]" class="form-control"  placeholder="Product Price" required oninput="calculateTotalPrice()">
                             <br>
-
+                
                             <label for="quantity" class="col-form-label">Quantity <span class="text-danger">*</span></label>
-                            <input type="number" name="quantity[]" class="form-control" min="0" placeholder="Enter quantity" required oninput="calculateTotalPrice()">
+                            <input type="number" name="quantity[]" class="form-control"  placeholder="Enter quantity" required oninput="calculateTotalPrice()">
                             <br>
                         </div>
                     </div>
-
-                    <!-- <button type="button" onclick="addProductField()" class="btn btn-secondary">Add Another Product</button>
-                    <br><br> -->
-
+                
                     <!-- Deposit Percentage -->
                     <label for="deposit_percent" class="col-form-label">Deposit Percentage (%) <span class="text-danger">*</span></label>
-                    <input type="number" id="deposit_percent" name="deposit_percent" class="form-control" placeholder="Enter deposit % " min="0" max="100" oninput="calculateDepositAmount()">
+                    <input type="number" id="deposit_percent" name="deposit_percent" class="form-control" placeholder="Enter deposit % "  max="100" oninput="calculateDepositAmount()">
                     <br>
-
+                
                     <!-- Deposit Amount -->
                     <label for="deposit_amount" class="col-form-label">Deposit Amount</label>
-                    <input type="number" id="deposit_amount" name="deposit_amount" class="form-control" readonly>
+                    <input type="number" id="deposit_amount" min="0" name="deposit_amount" class="form-control" readonly>
                     <br>
-
-
-
+                
                     <!-- Total Price -->
                     <label for="price" class="col-form-label">Total Price <span class="text-danger">*</span></label>
                     <input type="number" name="price" id="price" class="form-control" required readonly>
                     <br>
-
+                
                     <input type="submit" value="Add Order" class="btn btn-primary">
                 </form>
+                
             </div>
         </div>
     </div>
@@ -76,54 +72,94 @@
 
 <script>
     // Function to calculate the total price for all products
-    function calculateTotalPrice() {
-        let productPrices = document.querySelectorAll('input[name="product_price[]"]');
-        let quantities = document.querySelectorAll('input[name="quantity[]"]');
-        let totalPrice = 0;
+function calculateTotalPrice() {
+    let productPrices = document.querySelectorAll('input[name="product_price[]"]');
+    let quantities = document.querySelectorAll('input[name="quantity[]"]');
+    let totalPrice = 0;
 
-        // Loop through each product to calculate the total price
-        productPrices.forEach((productPrice, index) => {
-            let price = parseFloat(productPrice.value) || 0;
-            let quantity = parseInt(quantities[index].value) || 0;
-            totalPrice += price * quantity;
-        });
+    // Loop through each product to calculate the total price
+    productPrices.forEach((productPrice, index) => {
+        let price = parseFloat(productPrice.value) || 0;
+        let quantity = parseInt(quantities[index].value) || 0;
+        totalPrice += price * quantity;
+    });
 
-        // Set the total price for the order
-        document.getElementById('price').value = totalPrice.toFixed(2);
-        calculateDepositAmount();
-    }
+    // Set the total price for the order
+    document.getElementById('price').value = totalPrice.toFixed(2);
+    calculateDepositAmount();  // Recalculate deposit amount whenever the total price changes
+}
 
-    // Add new product fields dynamically
-    function addProductField() {
-        const productFieldsContainer = document.getElementById("product-fields");
-        const newProductField = document.createElement("div");
-        newProductField.classList.add("product-field");
-        newProductField.innerHTML = `
-            <label for="product_name" class="col-form-label">Product Name <span class="text-danger">*</span></label>
-            <input type="text" name="product_name[]" class="form-control" placeholder="Product Name" required>
-            <br>
-
-            <label for="product_price" class="col-form-label">Product Price <span class="text-danger">*</span></label>
-            <input type="number" name="product_price[]" class="form-control" placeholder="Product Price" required oninput="calculateTotalPrice()">
-            <br>
-
-            <label for="quantity" class="col-form-label">Quantity <span class="text-danger">*</span></label>
-            <input type="number" name="quantity[]" class="form-control" required oninput="calculateTotalPrice()">
-            <br>
-        `;
-        productFieldsContainer.appendChild(newProductField);
-    }
-
-    // Ensure total price is calculated before form submission
-    function updateTotalPrice() {
-        calculateTotalPrice();
-    }
-    function calculateDepositAmount() {
+// Function to calculate the deposit amount
+function calculateDepositAmount() {
     const totalPrice = parseFloat(document.getElementById("price").value) || 0;
     const depositPercent = parseFloat(document.getElementById("deposit_percent").value) || 0;
     const depositAmount = (totalPrice * depositPercent) / 100;
     document.getElementById("deposit_amount").value = depositAmount.toFixed(2);
+}
+
+// Function to validate that the quantity, deposit percentage, and total price are greater than 0
+function validateForm(event) {
+    let quantities = document.querySelectorAll('input[name="quantity[]"]');
+    let depositPercent = parseFloat(document.getElementById("deposit_percent").value) || 0;
+    let totalPrice = parseFloat(document.getElementById("price").value) || 0;
+
+    // Validate Quantity
+    for (let quantity of quantities) {
+        let quantityValue = parseInt(quantity.value) || 0;
+        if (quantityValue <= 0) {
+            alert("Value must be greater than 0.");
+            event.preventDefault(); // Prevent form submission
+            return false;
+        }
     }
+
+    // Validate Deposit Percentage
+    if (depositPercent <= 0) {
+        alert("Value must be greater than 0.");
+        event.preventDefault(); // Prevent form submission
+        return false;
+    }
+
+    // Validate Total Price
+    if (totalPrice <= 0) {
+        alert("Value must be greater than 0.");
+        event.preventDefault(); // Prevent form submission
+        return false;
+    }
+
+    return true; // Allow form submission
+}
+
+// Update the form's onsubmit to call validateForm and calculate total price
+function updateTotalPrice(event) {
+    if (!validateForm(event)) {
+        return false; // Prevent form submission if validation fails
+    }
+    calculateTotalPrice();
+    return true; // Allow form submission
+}
+
+// Add new product fields dynamically
+function addProductField() {
+    const productFieldsContainer = document.getElementById("product-fields");
+    const newProductField = document.createElement("div");
+    newProductField.classList.add("product-field");
+    newProductField.innerHTML = `
+        <label for="product_name" class="col-form-label">Product Name <span class="text-danger">*</span></label>
+        <input type="text" name="product_name[]" class="form-control" placeholder="Product Name" required>
+        <br>
+
+        <label for="product_price" class="col-form-label">Product Price <span class="text-danger">*</span></label>
+        <input type="number" name="product_price[]" class="form-control" placeholder="Product Price" required oninput="calculateTotalPrice()">
+        <br>
+
+        <label for="quantity" class="col-form-label">Quantity <span class="text-danger">*</span></label>
+        <input type="number" name="quantity[]" class="form-control" required oninput="calculateTotalPrice()">
+        <br>
+    `;
+    productFieldsContainer.appendChild(newProductField);
+}
+
 </script>
 
 {% endblock %}

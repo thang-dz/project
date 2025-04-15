@@ -16,21 +16,18 @@
         <div class="card mb-4">
             <div class="card-header">New Import</div>
             <div class="card-body">
-                <form id="product_form" action="/import/" method="POST" onsubmit="return checkMaterialName()">
+                <form id="product_form" action="/import/" method="POST" onsubmit="return checkForm(event)">
                     <label for="material_name">Material Name <span class="text-danger">*</span></label>
                     <input type="text" id="material_name" name="material_name" class="form-control" required><br>
         
-                    <!-- <label for="material_description">Material Description</label>
-                    <input type="text" name="material_description" class="form-control"><br> -->
-        
                     <label for="quantity_in_stock">Quantity <span class="text-danger">*</span></label>
-                    <input type="number" name="quantity_in_stock" min="0" class="form-control" required><br>
+                    <input type="number" id="quantity_in_stock" name="quantity_in_stock" class="form-control" required><br>
         
                     <label for="reorder_level">Reorder Level</label>
                     <input type="number" name="reorder_level" class="form-control" value="30"><br>
         
                     <label for="sup_name">Supplier Name <span class="text-danger">*</span></label>
-                    <input type="text" name="sup_name" class="form-control" required><br>
+                    <input type="text" id="sup_name" name="sup_name" class="form-control" required><br>
         
                     <label for="sup_contact_info">Supplier Phone Number <span class="text-danger">*</span></label>
                     <input type="number" name="sup_contact_info" class="form-control" required><br>
@@ -40,34 +37,65 @@
         
                     <button type="submit" class="btn btn-primary">Add Import</button>
                 </form>
-                
             </div>
         </div>
     </div>
 </main>
-<script>
-    function checkMaterialName(event) {
-    const materialName = document.getElementById('material_name').value;
-    
-    // Gửi yêu cầu AJAX để kiểm tra sự tồn tại của tên vật liệu
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', '/check-material-existence?material_name=' + materialName, true);
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-            const response = JSON.parse(xhr.responseText);
-            if (response.exists) {
-                alert("Material name already exists. Please choose a different name.");
-                event.preventDefault();  // Ngừng gửi form nếu vật liệu đã tồn tại
-                return false;  // Trả về false để ngừng gửi form
-            }
-            // Nếu tên vật liệu không trùng, cho phép gửi form
-            document.getElementById("product_form").submit();
-        }
-    };
-    xhr.send();
-    
-    return false;  // Trả về false để ngừng gửi form cho đến khi có phản hồi từ AJAX
-}
 
+<script>
+    async function checkForm(event) {
+        event.preventDefault(); // Prevent the form from submitting until the check is complete
+        
+        // Validate Material Name (only alphabets and spaces)
+        const materialName = document.getElementById('material_name').value;
+        const isMaterialAlphabetic =  /^[\p{L}\p{M}\s]+$/u.test(materialName);
+
+        if (!isMaterialAlphabetic) {
+            alert("Material Name must contain only letters.");
+            return false; // Prevent form submission
+        }
+        
+        // Validate Quantity (greater than 0)
+        const quantityInStock = document.getElementById('quantity_in_stock').value;
+        if (quantityInStock <= 0) {
+            alert("Value must be a number greater than 0.");
+            return false; // Prevent form submission
+        }
+
+        // Validate Supplier Name (only alphabets and spaces)
+        const supName = document.getElementById('sup_name').value;
+        const isSupplierAlphabetic =/^[\p{L}\p{M}\s]+$/u.test(supName);
+
+        if (!isSupplierAlphabetic) {
+            alert("Supplier Name must contain only letters.");
+            return false; // Prevent form submission
+        }
+
+        // Send AJAX request to check if the material name exists
+        try {
+            const response = await fetch('/check-material-existence?material_name=' + materialName);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // If material name exists, alert and prevent form submission
+                if (data.exists) {
+                    alert("Material name already exists. Please choose a different name.");
+                    return false; // Prevent form submission
+                } else {
+                    // If material name doesn't exist, submit the form
+                    document.getElementById("product_form").submit();
+                }
+            } else {
+                // Handle any error with the AJAX request
+                alert("An error occurred while checking material name.");
+                return false; // Prevent form submission
+            }
+        } catch (error) {
+            alert("An unexpected error occurred.");
+            return false; // Prevent form submission
+        }
+    }
 </script>
+
 {% endblock %}

@@ -49,21 +49,16 @@
                                         <td>
                                             <a href="{{ url_for('view_shipping', shipping_id=shipping.shipping_id) }}" class="btn btn-info">View</a>
                                             <a href="{{ url_for('confirm_shipping_payment', shipping_id=shipping.shipping_id) }}" class="btn btn-primary">Confirm Payment</a>
+                                            <form action="{{ url_for('delete_shipping_list', shipping_id=shipping.shipping_id) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this item from the shipping ?')">Delete</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
 
-                        <!-- Pagination Controls -->
-                        <div class="pagination">
-                            <span class="page-item">
-                                <a href="{{ url_for('shipping_list', page=shippings.prev_num) }}" class="page-link">Previous</a>
-                            </span>
-                            <span class="page-item">
-                                <a href="{{ url_for('shipping_list', page=shippings.next_num) }}" class="page-link">Next</a>
-                            </span>
-                        </div>
+                      
                     {% else %}
                         <p>No shipping orders found.</p>
                     {% endif %}

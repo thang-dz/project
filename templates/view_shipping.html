@@ -5,6 +5,15 @@
 {% endblock %}
 
 {% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert alert-dismissible fixed-alert">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
 <main>
     <div class="container-fluid">
         <h1 class="mt-4">Shipping Details for Order #{{ shipping.order_id }}</h1>
@@ -31,8 +40,11 @@
                 {% endif %}
             </div>
         </div>
+            <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this shipping?')">Cancel Shipping</button>
+            </form>
 
-        {% if shipping.shipping_status == "Pending" %}
+        {% if shipping.shipping_status == "Processing" %}
             <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this shipping?')">Cancel Shipping</button>
             </form>
@@ -40,7 +52,7 @@
             <p>This order has already been shipped and cannot be canceled.</p>
 
         {% else %}
-            <p>Shipping has been canceled or completed. No further actions can be taken.</p>
+            <p>Shipping has been {{shipping.shipping_status}}. No further actions can be taken.</p>
         {% endif %}
 
         <a href="/shipping-list/" class="btn btn-info">Back</a>

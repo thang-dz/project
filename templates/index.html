@@ -6,63 +6,13 @@
 
 {% block content %}
 <main>
+    <img class="pic-img" src="static/images/pic.png" >
     <div class="container-fluid">
-        <h1 class="mt-4">Dashboard</h1>
+        <h1 class="mt-4">Web</h1>
         <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item active">Dashboard</li>
+            <li class="breadcrumb-item active">Web</li>
         </ol>
 
-        <!-- Products Table Section -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <i class="fas fa-table mr-1"></i> Products Table
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    {% if products|length < 1 %}
-                        <h4>There are no Products, add one above</h4>
-                    {% else %}
-                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
-                            <thead>
-                                <tr>
-                                    <th>Product ID</th>
-                                    <th>Product Name</th>
-                                    <th>Category</th>
-                                    <th>Price</th>
-                                    <th>Stock</th>
-                                    <th>Material</th>
-                                    <th>Supplier</th>
-                                    <th>Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in products %}
-                                    <tr>
-                                        <td>{{ product.product_id }}</td> <!-- Display Product ID -->
-                                        <td>{{ product.pro_name }}</td>
-                                        <td>{{ product.pro_category }}</td>
-                                        <td>{{ product.pro_unit_price }}</td>
-                                        <td>{{ product.pro_stock }}</td>
-                                        <td>{{ product.material.material_name }}</td>
-                                        <td> {{ product.supplier.sup_name }}</td>
-                                        <td>{{ product.last_updated.date() }}</td> <!-- Display Date Created -->
-                                        <td>
-                                            <div style="display: inline-block;">
-                                                <form action="/delete-product/{{ product.product_id }}" method="POST" style="display:inline;">
-                                                    <button type="submit" class="btn btn-danger" onclick="return confirmDelete()">Delete</button>
-                                                </form>
-                                                <a href="/update-product/{{ product.product_id }}" class="btn btn-warning">Update</a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
     </div>
 </main>
 
