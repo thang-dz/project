@@ -55,18 +55,17 @@
                                     <td>{{import_record.sup_address}}</td>
                                     <td>{{import_record.status}}</td>
                                     <td>
-                                        <a href="/update-import/{{ import_record.import_id }}" class="btn btn-warning mb-2">Edit</a>
-                                        
+                                        <a href="/update-import/{{ import_record.import_id }}" class="btn btn-warning btn-sm">Edit</a>                                       
                                                                              
                                         <form action="{{ url_for('delete_import', import_id=import_record.import_id) }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-danger mb-2" onclick="return confirm('Are you sure you want to delete this import item?')">Delete</button>
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this import item?')">Delete</button>
                                         </form>
                                         {% if import_record.status == 'Supplying' %}
                                         <br>
                                         
 
                                         <form action="{{ url_for('update_import_status', import_id=import_record.import_id) }}" method="POST">
-                                            <button type="submit" class="btn btn-success">Import Inventory</button>
+                                            <button type="submit" class="btn btn-success btn-sm">Import Inventory</button>
                                         </form>
                                     {% endif %}
                                     </td>

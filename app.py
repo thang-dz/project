@@ -8,7 +8,8 @@ import pytz
 from wtforms import StringField, SubmitField, IntegerField, DecimalField, PasswordField
 from wtforms.validators import DataRequired, Email
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import func
 
 
 app = Flask(__name__)
@@ -30,10 +31,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(100), nullable=False)
     name     = db.Column(db.String(100), nullable=False)
 
-
-# Vietnam Time (UTC +7)
 VIETNAM_TZ = pytz.timezone("Asia/Ho_Chi_Minh")
-
 def vietnam_now():
     """Return the current time in Vietnam timezone."""
     return datetime.now(VIETNAM_TZ)
@@ -77,14 +75,12 @@ class Order(db.Model):
 
     def __repr__(self):
         return f'<Order {self.order_id}>'
-
-
 def add_monthly_data():
     # Lấy năm hiện tại
     current_year = datetime.now().year
 
     # Danh sách các tháng từ tháng 1 đến tháng 6
-    months = [f"{current_year}-{str(month).zfill(2)}" for month in range(1, 7)]  # Tháng 1 đến tháng 6
+    months = [f"{current_year}-{str(month).zfill(2)}" for month in range(1, 4)]  # Tháng 1 đến tháng 6
 
     # Kiểm tra xem có dữ liệu cho các tháng này trong cơ sở dữ liệu chưa
     for month in months:
@@ -99,8 +95,8 @@ def add_monthly_data():
                 cus_contact="Default Contact",
                 cus_address="Default Address",
                 order_date=order_date,  # Dùng đối tượng datetime cho order_date
-                price=1000,
-                deposit_amount=20,
+                price=100000000,
+                deposit_amount=2000000,
                 status="Delivered"
             )
             db.session.add(new_order)
@@ -108,13 +104,18 @@ def add_monthly_data():
     
     # Lưu thay đổi vào cơ sở dữ liệu
     db.session.commit()
-
-
-# Gọi hàm này trong ứng dụng Flask của bạn
 @app.before_request
 def initialize_data():
     add_monthly_data()
 
+class InventoryProduct(db.Model):
+    __tablename__ = 'inventorypro'
+    id = db.Column(db.Integer, primary_key=True)  # Unique ID for the inventory record
+    product_name = db.Column(db.String(255), nullable=False)  # Name of the product
+    quantity = db.Column(db.Integer, nullable=False, default=0)  # Quantity of the product in stock    
+    date = db.Column(db.DateTime, default=vietnam_now)  # Date of transaction
+    def __repr__(self):
+        return f'<InventoryProduct {self.product_name}>'
 
 class Inventory(db.Model):
     __tablename__ = 'inventory'
@@ -155,6 +156,7 @@ class OrderDetail(db.Model):
     product_name = db.Column(db.String(100))
     product_price = db.Column(db.Float)
     quantity = db.Column(db.Integer)
+    odstarus=db.Column(db.String(50), default="Processing")
     import_id = db.Column(db.Integer, db.ForeignKey('imports.import_id'))  # Import relation
 
     # Relationship to Import
@@ -163,7 +165,6 @@ class OrderDetail(db.Model):
 
     def __repr__(self):
         return f'<OrderDetail {self.orderdetail_id}>'
-
 
 class ProductBatch(db.Model):
     __tablename__ = 'product_batches'
@@ -182,7 +183,9 @@ class ProductBatch(db.Model):
     manufacturing_status = db.Column(db.String(50), default='In Production')
     product_condition = db.Column(db.String(50), nullable=True)
     defect_reason = db.Column(db.String(255), nullable=True)
-    transaction_date = db.Column(db.DateTime, default=vietnam_now)
+   
+    start_time = db.Column(db.DateTime,default=vietnam_now)  # Thêm trường thời gian bắt đầu
+    end_time = db.Column(db.DateTime,default=vietnam_now) 
     quantity_to_update=db.Column(db.Integer, default=0)
 
     inventory = db.relationship('Inventory', secondary=product_batch_materials, backref='product_batches')
@@ -193,7 +196,6 @@ class ProductBatch(db.Model):
     
     def is_complete(self):       
         return self.quantity_in_production == self.quantity_completed
-
 
 class ShippingQueue(db.Model):
     __tablename__ = 'shipping_queue'
@@ -211,7 +213,6 @@ class ShippingQueue(db.Model):
     def __repr__(self):
         return f"<ShippingQueue {self.shipping_queue_id} - Order {self.order_id} - Batch {self.batch_id}>"
 
-
 class Shipping(db.Model):
     __tablename__ = 'shipping'
     shipping_id = db.Column(db.Integer, primary_key=True)
@@ -226,7 +227,6 @@ class Shipping(db.Model):
 
     def __repr__(self):
         return f"<Shipping {self.shipping_id} - Order {self.order_id}>"
-
 
 class PurchaseRequest(db.Model):
     __tablename__      = 'purchase_request'
@@ -244,49 +244,28 @@ class ReturnRequest(db.Model):
     __tablename__ = 'return_requests'
     return_id = db.Column(db.Integer, primary_key=True)
     order_detail_id = db.Column(db.Integer, db.ForeignKey('order_details.order_detail_id'))
-    return_status = db.Column(db.String(50), default='Pending')  # Pending, Inspected, Restocked, Discarded, Requires Repair
-    condition = db.Column(db.String(50))  # Good, Defective, Requires Repair
-    defect_reason = db.Column(db.String(255))  # e.g., Broken, Incorrect Item
+    return_status = db.Column(db.String(50), default='Pending')  
+    condition = db.Column(db.String(50)) 
+    defect_reason = db.Column(db.String(255))  
     inspection_date = db.Column(db.DateTime, default=vietnam_now)
-    action_taken = db.Column(db.String(100))  # e.g., Restocked, Repaired, Discarded
+    refund_method  = db.Column(db.String(100))  
+  
+   
 
     order_detail = db.relationship('OrderDetail', backref='return_requests')
 
-
-# # Form Đăng nhập
-# class LoginForm(FlaskForm):
-#     email = StringField('Email', validators=[DataRequired(), Email()])
-#     password = PasswordField('Password', validators=[DataRequired()])
-#     submit = SubmitField('Login')
 
 # Khởi tạo Database
 with app.app_context():
     # db.drop_all() 
     db.create_all()
 
-# @app.route('/')
-# def home():
-#     return render_template("index.html")
-
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     form = LoginForm()
-#     if form.validate_on_submit():
-#         user = User.query.filter_by(email=form.email.data).first()
-#         if user and check_password_hash(user.password, form.password.data):
-#             login_user(user)
-#             return redirect(url_for('home'))
-#         else:
-#             flash('Invalid email or password', 'danger')
-#     return render_template('login.html', form=form)
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
 
 @app.route('/')
 @login_required
 def index():
     return render_template('index.html', logged_in=current_user.is_authenticated)
+
 @app.route('/register', methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -312,6 +291,7 @@ def register():
         return redirect(url_for("login"))
     # Passing True or False if the user is authenticated.
     return render_template("register.html", logged_in=current_user.is_authenticated)
+
 @app.route('/login', methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -327,63 +307,83 @@ def login():
             return redirect(url_for('login'))
         else:
             login_user(user)
-            return redirect(url_for('index'))
+            return redirect(url_for('dashboard'))
     # Passing True or False if the user is authenticated.
     return render_template("login.html", logged_in=current_user.is_authenticated)
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# Hàm lấy dữ liệu doanh thu theo tháng
+
+
 def get_sales_data():
-    # Truy vấn doanh thu hàng tháng
     sales_data = db.session.query(
         db.func.strftime('%Y-%m', Order.order_date).label('month'),
         db.func.sum(Order.price).label('total_sales')
-    ).group_by(db.func.strftime('%Y-%m', Order.order_date)).all()
+    ).filter(
+        Order.status == 'Delivered'  
+    ).group_by(
+        db.func.strftime('%Y-%m', Order.order_date)
+    ).all()
+    return [
+        {
+            'month': row.month.split('-')[1],
+            'total_sales': float(row.total_sales) if row.total_sales else 0.0
+        }
+        for row in sales_data
+    ]
 
-    # Lấy chỉ tháng từ dữ liệu 'YYYY-MM'
-    return [{'month': row.month.split('-')[1], 'total_sales': float(row.total_sales) if row.total_sales else 0.0} for row in sales_data]
-
-
-
-# Hàm lấy dữ liệu trạng thái đơn hàng
-def get_order_status_data():
-    order_status_data = db.session.query(
-        Order.status,
-        db.func.count(Order.order_id)
-    ).group_by(Order.status).all()
-
-    return [{'status': row.status, 'count': row[1]} for row in order_status_data]
-
-# Hàm lấy dữ liệu sản phẩm bán chạy nhất
 def get_top_selling_products():
     top_products = db.session.query(
         OrderDetail.product_name,
         db.func.sum(OrderDetail.quantity).label('total_quantity')
-    ).group_by(OrderDetail.product_name) \
-     .order_by(db.func.sum(OrderDetail.quantity).desc()) \
-     .limit(3).all()
+    ).filter(
+        OrderDetail.odstarus == 'Processing'  
+    ).group_by(
+        OrderDetail.product_name
+    ).order_by(
+        db.func.sum(OrderDetail.quantity).desc()
+    ).limit(3).all()
+    return [
+        {
+            'product_name': row.product_name,
+            'total_quantity': row.total_quantity
+        }
+        for row in top_products
+    ]
 
-    return [{'product_name': row.product_name, 'total_quantity': row.total_quantity} for row in top_products]
 
-# Route để hiển thị bảng điều khiển
 @app.route('/dashboard/')
 @login_required
 def dashboard():
     sales_data = get_sales_data()
-    order_status_data = get_order_status_data()
+    # order_status_data = get_order_status_data()
     top_products = get_top_selling_products()
 
     return render_template(
         'dashboard.html',
         sales_data=sales_data,
-        order_status_data=order_status_data,
+        # order_status_data=order_status_data,
         top_products=top_products
     )
 
+@app.route('/order_status_data')
+def get_order_status_data():
+    date_filter = request.args.get('date_filter', 'day') 
+    order_status_data = db.session.query(
+        Order.status,
+        func.count(Order.order_id)  
+    ).group_by(Order.status).all()
+    return jsonify([{'status': row.status, 'count': row[1]} for row in order_status_data])
+
+@app.route('/inventorypro/')
+@login_required
+def view_inventorypro():
+    inventorypro = InventoryProduct.query.all()
+    return render_template("inventoryPro.html", inventorypro=inventorypro )
 
 @app.route('/inventory/')
 @login_required
@@ -392,6 +392,7 @@ def view_inventory():
     low_stock_items = [item for item in inventory if item.quantity <= item.import_data.reorder_level]
     imports = Import.query.all()
     return render_template("inventory.html", inventory=inventory, imports=imports,low_stock_items=low_stock_items )
+
 @app.route('/classify-warehouse/<int:inventory_id>', methods=["POST"])
 @login_required
 def classify_warehouse(inventory_id):
@@ -401,6 +402,7 @@ def classify_warehouse(inventory_id):
     db.session.commit()  # Lưu thay đổi vào cơ sở dữ liệu
     flash(f"Material {inventory_item.product_name} classified as {warehouse}.", "success")
     return redirect(url_for('view_inventory'))
+
 @app.route('/classify-material/<int:inventory_id>', methods=["POST"])
 @login_required
 def classify_material(inventory_id):
@@ -410,6 +412,7 @@ def classify_material(inventory_id):
     db.session.commit()
     flash(f"Material {inventory_item.product_name} classified as {category}.", "success")
     return redirect(url_for('view_inventory'))
+
 @app.route('/delete-inventory/<int:inventory_id>', methods=["POST"])
 @login_required
 def delete_inventory(inventory_id):
@@ -426,6 +429,7 @@ def delete_inventory(inventory_id):
         flash(f"Error deleting inventory item: {str(e)}", "danger")
 
     return redirect(url_for('view_inventory'))  # Redirect back to the inventory page
+
 @app.route('/create_purchase_request/<int:import_id>', methods=["GET", "POST"])
 @login_required
 def create_purchase_request(import_id):
@@ -516,6 +520,7 @@ def add_imports():
                            sup_contact_info=sup_contact_info,
                            sup_name=sup_name                           
                            )
+
 @app.route('/add-import/', methods=["GET", "POST"])
 @login_required
 def add_import():
@@ -564,6 +569,7 @@ def add_import():
 
 
     return render_template("add-import.html")  # Render the form when GET request
+
 @app.route('/update-import-status/<int:import_id>', methods=["POST"])
 @login_required
 def update_import_status(import_id):
@@ -601,6 +607,7 @@ def update_import_status(import_id):
         flash("The import is already marked as 'Supplied'.", "warning")
 
     return redirect(url_for('view_import'))
+
 @app.route('/update-import/<int:import_id>', methods=["POST", "GET"])
 @login_required
 def update_import(import_id):
@@ -641,6 +648,7 @@ def update_import(import_id):
             db.session.commit()
 
     return render_template("update-import.html", import_record=import_record)
+
 @app.route('/delete-import/<int:import_id>', methods=["POST"])
 @login_required
 def delete_import(import_id):
@@ -655,6 +663,7 @@ def delete_import(import_id):
         flash(f"Error deleting import: {str(e)}", "danger")
 
     return redirect(url_for('view_import'))
+
 @app.route('/import/', methods=["GET", "POST"])
 @login_required
 def view_import():
@@ -775,6 +784,7 @@ def add_order():
         return redirect("/order/")
 
     return render_template('add-order.html')
+
 @app.template_filter('format_price')
 @login_required
 def format_price(value):
@@ -783,16 +793,19 @@ def format_price(value):
         return "{:,.2f}".format(value)
     except (ValueError, TypeError):
         return value
+
 @app.route('/order/', methods=["GET", "POST"])
 @login_required
 def view_order():
     orders = Order.query.all()    
     return render_template("order.html", orders=orders)
+
 @app.route("/order-detail/<int:order_id>")
 @login_required
 def order_detail(order_id):
     order = Order.query.get_or_404(order_id)
     return render_template("order-detail.html", order=order)
+
 @app.route("/update-order/<int:order_id>", methods=["POST", "GET"])
 @login_required
 def updateOrder(order_id):
@@ -832,6 +845,7 @@ def updateOrder(order_id):
             flash(f"There was an issue while updating the order: {str(e)}", "danger")
 
     return render_template("update-order.html", order=order)
+
 @app.route("/delete-order/<int:order_id>", methods=["GET", "POST"])
 @login_required
 def deleteOrder(order_id):
@@ -851,40 +865,6 @@ def deleteOrder(order_id):
         db.session.rollback()  # Rollback nếu có lỗi
         flash(f"There was an issue while deleting the order: {str(e)}", "danger")  # Hiển thị lỗi
         return redirect("/order/")  # Quay lại danh sách đơn hàng
-
-
-
-# @app.route('/deposit-confirm/', methods=["POST", "GET"])
-# def deposit_confirm():
-#     if request.method == "POST":
-#         order_id = request.form.get("order_id")
-#         deposit_amount = request.form.get("deposit_amount", type=float)
-
-#         # Kiểm tra mã đơn hàng hợp lệ
-#         order = Order.query.filter_by(order_id=order_id).first()
-#         if not order:
-#             flash("Invalid order ID. Please try again.", "danger")
-#             return redirect(url_for('deposit_confirm'))
-
-#         # Kiểm tra số tiền gửi có đủ không
-#         if deposit_amount < order.price:
-#             flash(f"Deposit is insufficient. ", "danger")
-#             return redirect(url_for('deposit_confirm'))
-
-#         # Thêm giao dịch gửi tiền vào cơ sở dữ liệu
-#         deposit_confirm = DepositConfirm(
-#             order_id=order.order_id,
-#             deposit_amount=deposit_amount,
-#             transaction_date=datetime.utcnow()
-#         )
-#         db.session.add(deposit_confirm)
-#         db.session.commit()
-
-#         flash("Deposit recorded successfully.", "success")
-#         return redirect(url_for('deposit_confirm', order_id=order.order_id))  # Redirect to order details page
-
-#     return render_template("deposit_confirm.html")
-
 
 
 @app.route('/add-product-batch/', methods=["GET", "POST"])
@@ -939,6 +919,7 @@ def add_product_batch():
             flash(f"Error: {str(e)}", 'danger')
 
     return render_template('add_product_batch.html', order_details=order_details, inventory=inventory)
+
 @app.route('/delete-product-batch/<int:batch_id>', methods=["POST"])
 @login_required
 def delete_product_batch(batch_id):
@@ -956,11 +937,13 @@ def delete_product_batch(batch_id):
         flash(f"Error: {str(e)}", 'danger')
 
     return redirect(url_for('view_product_batches'))
+
 @app.route('/view-product-batches/', methods=["GET"])
 @login_required
 def view_product_batches():
     product_batches = ProductBatch.query.all()
     return render_template('view_product_batches.html', product_batches=product_batches)
+
 @app.route('/update-quantity-produced/<int:batch_id>', methods=["GET", "POST"])
 @login_required
 def update_quantity_produced(batch_id):
@@ -976,9 +959,16 @@ def update_quantity_produced(batch_id):
         quantity_to_update = int(request.form.get('quantity_to_update', 0))  # Quantity produced for this batch     
         total_produced = sum(batch.quantity_completed for batch in order_detail.product_batches)
         
+        
         if total_produced + quantity_to_update > order_detail.quantity:
             flash("Invalid quantity.", 'danger')
             return redirect(url_for('view_product_batches'))
+        
+        if product_batch.start_time is None:
+             product_batch.start_time = vietnam_now()
+
+       
+        product_batch.end_time = vietnam_now()
 
         # Cập nhật số lượng sản phẩm đã sản xuất cho batch
         product_batch.quantity_completed = quantity_to_update  # Update quantity_completed with the new value
@@ -1060,20 +1050,23 @@ def ship_product_batch(batch_id):
 def shipping_queue_list():
     shipping_queue_items = ShippingQueue.query.filter_by(status="Processing").all()
     return render_template('shipping_queue.html', shipping_queue_items=shipping_queue_items)
+
 @app.route('/create-shipping-order/<int:order_id>', methods=["GET", "POST"])
 @login_required
 def create_shipping_order(order_id):
     order = Order.query.get_or_404(order_id)
     if request.method == "POST":
         provider = request.form['provider']
-        pay_method=request.form['pay_method']
+        pay_method = request.form['pay_method']
         shipping_cost = request.form.get('shipping_cost', type=float)
+        shipment_time = request.form.get('shipment_time') 
         if not provider:
             flash("Shipping provider must be selected.", "danger")
             return redirect(url_for('create_shipping_order', order_id=order_id))
         if shipping_cost is None or shipping_cost <= 0:
             flash("Shipping cost must be a positive value.", "danger")
             return redirect(url_for('create_shipping_order', order_id=order_id))
+        
         tracking_code = generate_tracking_code()
         shipping = Shipping(
             order_id=order_id,
@@ -1081,60 +1074,51 @@ def create_shipping_order(order_id):
             tracking_code=tracking_code,
             shipping_cost=shipping_cost,
             pay_method=pay_method,
-            shipping_status="Processsing")
+            shipping_status="Processing",
+            shipment_time=shipment_time)
+
         try:
             db.session.add(shipping)
-            db.session.commit()
+            db.session.commit()  # Commit only once after all changes
             flash(f"Shipping order created for Order #{order_id} with tracking code {tracking_code}.", 'success')
             return redirect(url_for('shipping_list', shipping_id=shipping.shipping_id))
         except Exception as e:
             db.session.rollback()
-            flash(f"Error creating shipping order: {str(e)}", 'danger')    
+            flash(f"Error creating shipping order: {str(e)}", 'danger')
+    
     return render_template('create_shipping_order.html', order=order)
 def generate_tracking_code():
     length = 10
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
 @app.route('/confirm-shipping-payment/<int:shipping_id>', methods=["POST", "GET"])
 @login_required
 def confirm_shipping_payment(shipping_id):
     shipping = Shipping.query.get_or_404(shipping_id)
-    order = Order.query.get_or_404(shipping.order_id)
-    
+    order = Order.query.get_or_404(shipping.order_id)       
     if request.method == "POST":
         try:
-            payment_amount = float(request.form['payment_amount'])
-            
-            # Kiểm tra xem số tiền thanh toán có đủ hay không
+            payment_amount = float(request.form['payment_amount'])            
             if payment_amount < shipping.shipping_cost:
                 flash("Insufficient payment for shipping.", "danger")
                 return redirect(url_for('confirm_shipping_payment', shipping_id=shipping_id))
-            
-            # Cập nhật trạng thái shipping
-            shipping.shipping_status = "Paid"
-            db.session.commit()
-            
+            shipping.shipping_status = "Paid"            
             shipping_queue_items = ShippingQueue.query.filter_by(order_id=order.order_id).all()
-            
-            # Cập nhật trạng thái của mỗi mục ShippingQueue
             for shipping_queue_item in shipping_queue_items:
                 shipping_queue_item.status = "Delivered"
-                db.session.commit()
-
-            # Kiểm tra trạng thái của tất cả các shipping trong order, nếu tất cả đã "Paid", chuyển order thành "Delivered"
+            order_details = OrderDetail.query.filter_by(order_id=order.order_id).all()
+            product_batches = ProductBatch.query.filter(ProductBatch.order_detail_id.in_([od.order_detail_id for od in order_details])).all()
             all_shippings = Shipping.query.filter_by(order_id=order.order_id).all()
-            if all(shipping.shipping_status == "Paid" for shipping in all_shippings):
-                order.status = "Delivered"
-                db.session.commit()
-                        
+            if all(s.shipping_status == "Paid" for s in all_shippings)  and all(pb.manufacturing_status == "Completed" for pb in product_batches): 
+                order.status = "Delivered"            
+            db.session.commit()  # Commit only once after all changes            
             flash("Shipping payment confirmed. Shipping marked as Paid.", "success")
-            return redirect(url_for('view_shipping', shipping_id=shipping_id))
-        
+            return redirect(url_for('view_shipping', shipping_id=shipping_id))        
         except ValueError:
             flash("Invalid payment amount. Please enter a valid number.", "danger")
         except Exception as e:
             db.session.rollback()
-            flash(f"Error during payment confirmation: {str(e)}", 'danger')
-    
+            flash(f"Error during payment confirmation: {str(e)}", 'danger')    
     return render_template('confirm_shipping_payment.html', shipping=shipping)
 
 @app.route('/shipping-list/', methods=["GET"])
@@ -1143,46 +1127,45 @@ def shipping_list():
     page = request.args.get('page', 1, type=int)
     shippings = Shipping.query.paginate(page=page, per_page=10)
     return render_template('shipping-list.html', shippings=shippings)
+
 @app.route('/delete-shipping-list/<int:shipping_id>', methods=["POST"])
 @login_required
 def delete_shipping_list(shipping_id):
-    # Truy vấn shipping bằng ID
     shipping = Shipping.query.get_or_404(shipping_id)
-    
     try:
-        # Xóa bản ghi shipping và commit vào database
         db.session.delete(shipping)
         db.session.commit()
-        
-        # Thông báo thành công
         flash(f"Shipping queue item #{shipping_id} deleted successfully.", "success")
     except Exception as e:
-        # Nếu lỗi, rollback và thông báo lỗi
         db.session.rollback()
         flash(f"Error deleting shipping queue item: {str(e)}", "danger")
-    
-    # Redirect về danh sách shipping
     return redirect(url_for('shipping_list'))
+
 @app.route('/shipping/<int:shipping_id>', methods=["GET"])
 @login_required
 def view_shipping(shipping_id):
     shipping = Shipping.query.get_or_404(shipping_id)
     return render_template('view_shipping.html', shipping=shipping)
+
 @app.route('/cancel-shipping/<int:shipping_id>', methods=["POST"])
 @login_required
 def cancel_shipping(shipping_id):
     shipping = Shipping.query.get_or_404(shipping_id)    
-    if shipping.shipping_status != "Processing"  :
+    order = Order.query.get_or_404(shipping.order_id)
+    if shipping.shipping_status != "Processing" and shipping.shipping_status !="Paid" :
         flash("This shipping order cannot be canceled because it is either already  canceled.", "danger")
         return redirect(url_for('view_shipping', shipping_id=shipping_id))
     try:
         shipping.shipping_status = "Cancelled"
+        if (shipping.shipping_status == "Cancelled") :
+            order.status="Cancelled"
         db.session.commit()
         flash("Shipping order has been successfully canceled.", "success")
     except Exception as e:
-        db.session.rollback()  # Rollback in case of error
+        db.session.rollback()  
         flash(f"Error canceling shipping: {str(e)}", "danger")
     return redirect(url_for('view_shipping', shipping_id=shipping_id))
+
 @app.route('/delete-shipping-queue/<int:shipping_queue_id>', methods=["POST"])
 @login_required
 def delete_shipping_queue(shipping_queue_id):
@@ -1198,138 +1181,122 @@ def delete_shipping_queue(shipping_queue_id):
 
 
 @app.route('/create-return/', methods=['GET', 'POST'])
-def create_return():
+def create_return():    
+    returns = ReturnRequest.query.all()  
     if request.method == 'POST':
-        order_detail_id = request.form['order_detail_id']
-        condition = request.form['condition']
-        defect_reason = request.form.get('defect_reason', '')
-        # repair_time = request.form.get('repair_time', 3)  # Default to 3 days
-        
+        order_detail_id = request.form.get('order_detail_id')
+        condition = request.form.get('condition')
+        refund_method = request.form.get('refund_method')    
+        if not refund_method:
+            flash("Please select a refund method to proceed.", "danger")
+            return redirect(url_for('create_return'))
+        if not order_detail_id:
+            flash("Order Detail ID is required.", "danger")
+            return redirect(url_for('create_return'))
+        order_detail = OrderDetail.query.get(order_detail_id)
+        if not order_detail:
+            flash("Invalid order detail ID.", "danger")
+            return redirect(url_for('create_return'))    
+        order = order_detail.order_relation  
+        if order.status != 'Delivered': 
+            flash("Return request can only be created for delivered orders.", "danger")
+            return redirect(url_for('view_returns'))  
+        if order_detail.odstarus != "Processing":  
+            flash("Return request can only be created for processing order details.", "danger")
+            return redirect(url_for('create_return')) 
         new_return = ReturnRequest(
             order_detail_id=order_detail_id,
             condition=condition,
-            defect_reason=defect_reason if condition == 'Defective' else None,
             return_status='Pending',
-            # repair_time=repair_time
+            refund_method=refund_method
         )
-
         db.session.add(new_return)
-        db.session.commit()
+        order_detail.odstarus = "Done"
+        order.status = 'Processing'   
+        if order.shipping_details:  
+            shipment_time = order.shipping_details[0].shipment_time  
+            return_window = timedelta(days=7)  
+            if shipment_time + return_window < datetime.now():
+                flash(f"Return period has expired for this item.", "danger")
+                db.session.commit()
+                return redirect(url_for('create_return'))
+        else:
+            flash("No shipping information found. Cannot process return request.", "danger")
+            return redirect(url_for('create_return'))   
+        db.session.commit()       
         flash("Return request created successfully.", "success")
-        return redirect(url_for('view_returns'))
+        return redirect(url_for('create_return'))
+    order_details = OrderDetail.query.join(Order).filter(Order.status == 'Delivered', OrderDetail.odstarus == "Processing").all()
+    return render_template('return_form.html', order_details=order_details, returns=returns)
 
-    return render_template('return_form.html')
-@app.route('/returns/')
-def view_returns():
-    returns = ReturnRequest.query.all()
-    return render_template('view_returns.html', returns=returns)
+@app.route('/delete-return/<int:return_id>', methods=['POST'])
+def delete_return(return_id):
+    print(f"Attempting to delete return with ID: {return_id}")
+    return_request = ReturnRequest.query.get_or_404(return_id)
+    order_detail = return_request.order_detail
+    order = order_detail.order_relation if order_detail else None
+    try:
+        if order_detail and order:
+            order_detail.odstarus = "Processing"  
+            order.status = 'Delivered'
+        db.session.delete(return_request)
+        db.session.commit()
+        flash("Return request deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback() 
+        flash(f"Error deleting return request: {str(e)}", "danger")
+    return redirect(url_for('create_return'))
+
 @app.route('/inspect-return/<int:return_id>', methods=['GET', 'POST'])
 def inspect_return(return_id):
-    return_request = ReturnRequest.query.get_or_404(return_id)
-
+    return_request = ReturnRequest.query.get_or_404(return_id)    
     if request.method == 'POST':
-        condition = request.form['condition']
-
-        if condition not in ['Good', 'Defective', 'Requires Repair']:
+        # Lấy điều kiện từ form
+        condition = request.form.get('condition')        
+        if condition not in ['Good', 'Damaged']:
             flash("Invalid product condition.", "danger")
             return redirect(url_for('view_returns'))
-
-        # Nếu tình trạng là Defective, yêu cầu người dùng chọn lý do
-        if condition == 'Defective':
-            defect_reason = request.form.get('defect_reason')
-            if not defect_reason:
-                flash("Please provide a reason for the defect (e.g., Broken, Incorrect Item).", "danger")
-                return redirect(url_for('inspect_return', return_id=return_id))
-            return_request.defect_reason = defect_reason
-        
-        # Nếu tình trạng là Requires Repair, gợi ý thời gian sửa chữa
-        elif condition == 'Requires Repair':
-            flash("Estimated repair time: 3-5 days.", "info")
-
-        # Cập nhật trạng thái kiểm tra
+        return_request.return_status = "Processing"
         return_request.condition = condition
-        return_request.return_status = "Inspected"
-
-        db.session.commit()
+        db.session.commit() 
         flash("Return inspected successfully.", "success")
-        return redirect(url_for('view_returns'))
+        return redirect(url_for('create_return'))  
+    return render_template('return_form.html', return_request=return_request)
 
-    return render_template('inspect_return_form.html', return_request=return_request)
-@app.route('/action-return/<int:return_id>', methods=['POST'])
-def action_return(return_id):
+@app.route('/confirm-payment/<int:return_id>', methods=['GET', 'POST'])
+def confirm_payment(return_id):
     return_request = ReturnRequest.query.get_or_404(return_id)
-    action_taken = request.form['action_taken']
-
-    # Nếu là hành động Restocked, kiểm tra sản phẩm có phải là Defective không
-    if action_taken == "Restocked":
-        if return_request.condition == "Defective":
-            flash("Defective products cannot be restocked.", "danger")
-            return redirect(url_for('view_returns'))
-
-        # Cập nhật tồn kho nếu không phải là defective
-        order_detail = OrderDetail.query.get(return_request.order_detail_id)
-        inventory_item = Inventory.query.filter_by(product_name=order_detail.product_name).first()
-        if inventory_item:
-            inventory_item.quantity += 1  # Cập nhật số lượng tồn kho
-        else:
-            new_inventory_item = Inventory(
-                product_name=order_detail.product_name,
-                quantity=1,
-                transaction_type="Addition",
-                import_id=order_detail.import_id
-            )
-            db.session.add(new_inventory_item)
-        flash(f"Product {order_detail.product_name} restocked successfully.", "success")
-
-    elif action_taken == "Discarded":
-        # Nếu discard, xóa khỏi tồn kho
-        order_detail = OrderDetail.query.get(return_request.order_detail_id)
-        inventory_item = Inventory.query.filter_by(product_name=order_detail.product_name).first()
-        if inventory_item:
-            db.session.delete(inventory_item)
-        flash(f"Product {order_detail.product_name} discarded successfully.", "success")
-
-    elif action_taken == "Repaired":
-        flash("Repair process started. Estimated time: 3-5 days.", "info")
-
-    # Cập nhật trạng thái yêu cầu trả hàng
-    return_request.return_status = "Processed"
-    return_request.action_taken = action_taken
-    db.session.commit()
-    flash(f"Return action '{action_taken}' completed.", "success")
-    return redirect(url_for('view_returns'))
-@app.route('/restock/<int:order_detail_id>', methods=['POST'])
-def restock_product(order_detail_id):
-    order_detail = OrderDetail.query.get_or_404(order_detail_id)
-    inventory_item = Inventory.query.filter_by(product_name=order_detail.product_name).first()
-
-    if inventory_item:
-        inventory_item.quantity += 1
-    else:
-        new_inventory_item = Inventory(
-            product_name=order_detail.product_name,
-            quantity=1,  # Add one more unit
-            transaction_type="Addition",
-            import_id=order_detail.import_id
-        )
-        db.session.add(new_inventory_item)
+    order_detail = return_request.order_detail
+    order = order_detail.order_relation if order_detail else None  
     
-    db.session.commit()
-    flash(f"Product {order_detail.product_name} restocked successfully.", "success")
-    return redirect(url_for('view_inventory'))
-@app.route('/discard/<int:order_detail_id>', methods=['POST'])
-def discard_product(order_detail_id):
-    order_detail = OrderDetail.query.get_or_404(order_detail_id)
-    inventory_item = Inventory.query.filter_by(product_name=order_detail.product_name).first()
+    order.status='Cancelled'
+    if request.method == 'POST':        
+        if order:
+            order.price = 0
+        
+        if return_request.condition == 'Good':
+            return_request.return_status = 'Completed'
+            if order_detail:
+                new_inventory = InventoryProduct(
+                    product_name=order_detail.product_name,
+                    quantity=order_detail.quantity,
+                    date=vietnam_now()
+                )
+                db.session.add(new_inventory)
+                
+            db.session.commit()
+            flash("Payment confirmed. Product added to inventory.", "success")
+            return redirect(url_for('create_return'))
 
-    if inventory_item:
-        db.session.delete(inventory_item)
-        db.session.commit()
-        flash(f"Product {order_detail.product_name} discarded successfully.", "success")
-    else:
-        flash(f"Product {order_detail.product_name} not found in inventory.", "danger")
+        # 3. Handle "Defective" condition → mark complete only
+        if return_request.condition == 'Damaged':
+            return_request.return_status = 'Completed'
+                          
+            db.session.commit()
+            flash("Defective product marked as completed.", "warning")
+            return redirect(url_for('create_return'))
 
-    return redirect(url_for('view_inventory'))
+    return render_template('confirm_payment.html', return_request=return_request)
 
 
 
@@ -1340,8 +1307,6 @@ def check_material_existence():
     if existing_material:
         return jsonify({'exists': True})
     return jsonify({'exists': False})
-
-
 
 
 
@@ -1357,18 +1322,6 @@ def check_material_existence():
 #             return jsonify({"output": True})  # Name is unique
 
 
-# @app.route('/inventory', methods=['GET'])
-# def get_inventory():
-#     products = Product.query.all()
-#     return jsonify([{ "id": p.id, "name": p.name, "stock": p.stock, "price": float(p.unit_price) } for p in products])
-
-# @app.route('/add_product', methods=['POST'])
-# def add_product():
-#     data = request.get_json()
-#     new_product = Product(name=data['name'], category=data.get('category', ''), unit_price=data['unit_price'], stock=data.get('stock', 0), supplier_id=data.get('supplier_id'))
-#     db.session.add(new_product)
-#     db.session.commit()
-#     return jsonify({"message": "Product added successfully."})
 
 
 

@@ -6,57 +6,126 @@
 
 {% block content %}
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Add New Order</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item active">Add Order</li>
-        </ol>
+    <div class="container-fluid px-4">
+        <h1 class="mt-4 mb-3 text-primary">Add New Order</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-light p-2 rounded mb-4">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="fas fa-home me-1"></i>Dashboard</a></li>
+                <li class="breadcrumb-item active">Add Order</li>
+            </ol>
+        </nav>
 
-        <div class="card mb-4">
-            <div class="card-header">New Order</div>
+        <div class="card mb-4 shadow">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-plus-circle me-1"></i> New Order
+            </div>
             <div class="card-body">
-                <form method="POST">
-                    <div class="form-group">
-                        <label for="material_name">Material Name</label>
-                        <input type="text" name="material_name" id="material_name" class="form-control" value="{{ material_name }}" readonly>
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="material_name" class="form-label fw-bold">Material Name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-box"></i></span>
+                                <input type="text" name="material_name" id="material_name" class="form-control" value="{{ material_name }}" readonly>
+                            </div>
+                        </div>
+                    
+                        <div class="col-md-6 mb-3">
+                            <label for="reorder_level" class="form-label fw-bold">Reorder Level</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-level-down-alt"></i></span>
+                                <input type="number" name="reorder_level" id="reorder_level" class="form-control" value="{{ reorder_level }}" readonly>
+                            </div>
+                        </div>
                     </div>
                 
-                    <!-- <div class="form-group">
-                        <label for="material_description">Material Description</label>
-                        <input type="text" name="material_description" id="material_description" class="form-control" value="{{ material_description }}" readonly>
-                    </div> -->
-                
-                    <div class="form-group">
-                        <label for="reorder_level">Reorder Level</label>
-                        <input type="number" name="reorder_level" id="reorder_level" class="form-control" value="{{ reorder_level }}" readonly>
+                    <div class="mb-3">
+                        <label for="quantity_in_stock" class="form-label fw-bold">Quantity to Order <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-sort-amount-up"></i></span>
+                            <input type="number" name="quantity_in_stock" id="quantity_in_stock" min="0" class="form-control" value="{{ prefilled_quantity }}" required>
+                            <div class="invalid-feedback">
+                                Please enter a valid quantity.
+                            </div>
+                        </div>
                     </div>
                 
-                    <div class="form-group">
-                        <label for="quantity_in_stock">Quantity to Order <span class="text-danger">*</span></label>
-                        <input type="number" name="quantity_in_stock" id="quantity_in_stock" min="0" class="form-control" value="{{ prefilled_quantity }}" required>
+                    <div class="card mb-4 bg-light">
+                        <div class="card-header bg-secondary text-white">
+                            <i class="fas fa-truck me-1"></i> Supplier Information
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="sup_name" class="form-label fw-bold">Supplier Name <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                        <input type="text" name="sup_name" id="sup_name" value="{{ sup_name }}" class="form-control" required>
+                                        <div class="invalid-feedback">
+                                            Please provide a supplier name.
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                                <div class="col-md-6 mb-3">
+                                    <label for="sup_contact_info" class="form-label fw-bold">Supplier Contact Info <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                        <input type="text" name="sup_contact_info" id="sup_contact_info" value="{{ sup_contact_info }}" class="form-control" required>
+                                        <div class="invalid-feedback">
+                                            Please provide supplier contact information.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        
+                            <div class="mb-3">
+                                <label for="sup_address" class="form-label fw-bold">Supplier Address <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
+                                    <textarea name="sup_address" id="sup_address" class="form-control" rows="2" required>{{ sup_address }}</textarea>
+                                    <div class="invalid-feedback">
+                                        Please provide a supplier address.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 
-                    <div class="form-group">
-                        <label for="sup_name">Supplier Name</label>
-                        <input type="text" name="sup_name" id="sup_name" value="{{ sup_name }}" class="form-control" required>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Create Order
+                        </button>
                     </div>
-                
-                    <div class="form-group">
-                        <label for="sup_contact_info">Supplier Contact Info</label>
-                        <input type="text" name="sup_contact_info" id="sup_contact_info" value="{{ sup_contact_info }}" class="form-control" required>
-                    </div>
-                
-                    <div class="form-group">
-                        <label for="sup_address">Supplier Address</label>
-                        <input type="text" name="sup_address" id="sup_address" value="{{ sup_address }}" class="form-control" required>
-                    </div>
-                
-                    <button type="submit" class="btn btn-primary">Add Import</button>
                 </form>
-                
             </div>
         </div>
     </div>
 </main>
+
+<script>
+// Bootstrap form validation
+(function () {
+    'use strict'
+    
+    // Fetch all forms that need validation
+    var forms = document.querySelectorAll('.needs-validation')
+    
+    // Loop over them and prevent submission
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                
+                form.classList.add('was-validated')
+            }, false)
+        })
+})()
+</script>
 {% endblock %}

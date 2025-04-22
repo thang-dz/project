@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 
 {% block title %}
@@ -11,13 +10,17 @@
         <h1 class="mt-4">Shipping Details for Order {{order.order_id}}</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item active">Shipping </li>
+            <li class="breadcrumb-item active">Shipping</li>
         </ol>
+        <div id="payment-error-message" class="alert alert-danger mt-3" style="display:none;">Please select a payment method to complete the transaction.</div>
+        <!-- Error Message for Shipping Provider -->
+        <div id="provider-error-message" class="alert alert-danger mt-3" style="display:none;">Please choose a shipping provider before proceeding.</div>
 
         <!-- Create Shipping Form -->
         <div class="card mb-4">
-            <div class="card-header">Shipping Details </div>
+            <div class="card-header">Shipping Details</div>
             <div class="card-body">
+                
                 <form method="POST" id="shipping-order-form">
                     <input type="hidden" name="order_id" value="{{ order.order_id }}">
 
@@ -34,40 +37,68 @@
                         <input type="text" name="material_name" id="material_name" class="form-control" value="{{ order.cus_address }}" readonly>
                     </div>
 
+                    <!-- Payment Method Dropdown with Placeholder -->
                     <div class="form-group">
                         <label for="pay_method">Payment Method</label>
-                        <select class="form-control" id="pay_method" name="pay_method" required>
-                            <option value=" Credit Card"> Credit Card</option>
-                            <option value="PayPal">PayPal</option>
-                            <option value="Cash on Delivery">Cash on Delivery</option>
-                            <!-- <option value="USPS">USPS</option> -->
+                        <select class="form-control" id="pay_method" name="pay_method" >
+                            <option value="" disabled selected>Please choose</option>
+                            <option value="Credit Card" {% if order.pay_method == 'Credit Card' %}selected{% endif %}>Credit Card</option>
+                            <option value="PayPal" {% if order.pay_method == 'PayPal' %}selected{% endif %}>PayPal</option>
+                            <option value="Cash on Delivery" {% if order.pay_method == 'Cash on Delivery' %}selected{% endif %}>Cash on Delivery</option>
                         </select>
                     </div>
         
+                    <!-- Shipping Provider Dropdown with Placeholder -->
                     <div class="form-group">
                         <label for="provider">Logistics Provider</label>
-                        <select class="form-control" id="provider" name="provider" required>
-                            <option value="GiaoHangNhanh">GiaoHangNhanh</option>
-                            <option value="J&T Express">J&T Express</option>
-                            <option value="Viettel Post">Viettel Post</option>
-                            <option value="Giaohangtietkiem">Giaohangtietkiem</option>
-                            <option value="BEST Express">BEST Express</option>
+                        <select class="form-control" id="provider" name="provider" >
+                            <option value="" disabled selected>Please choose</option>
+                            <option value="GiaoHangNhanh" {% if order.provider == 'GiaoHangNhanh' %}selected{% endif %}>GiaoHangNhanh</option>
+                            <option value="J&T Express" {% if order.provider == 'J&T Express' %}selected{% endif %}>J&T Express</option>
+                            <option value="Viettel Post" {% if order.provider == 'Viettel Post' %}selected{% endif %}>Viettel Post</option>
+                            <option value="Giaohangtietkiem" {% if order.provider == 'Giaohangtietkiem' %}selected{% endif %}>Giaohangtietkiem</option>
+                            <option value="BEST Express" {% if order.provider == 'BEST Express' %}selected{% endif %}>BEST Express</option>
                         </select>
                     </div>
         
+                    <!-- Shipping Cost Input -->
                     <div class="form-group">
                         <label for="shipping_cost">Shipping Cost</label>
                         <input type="number" class="form-control" id="shipping_cost" name="shipping_cost" step="0.01" required>
                         <small class="form-text text-muted">The shipping cost will be calculated based on the selected provider.</small>
                     </div>
 
-        
-                   
                     <button type="submit" class="btn btn-primary">Create Ship</button>
-                    <a href="/shipping-queue/" class="btn btn-secondary">Back </a>
+                    <a href="/shipping-queue/" class="btn btn-secondary">Back</a>
                 </form>
+                <!-- Error Message for Payment Method -->
+                
             </div>
         </div>
     </div>
 </main>
+
+<!-- JavaScript to check the shipping provider and payment method -->
+<script>
+    document.getElementById('shipping-order-form').addEventListener('submit', function(event) {
+        var provider = document.getElementById('provider').value;
+        var payMethod = document.getElementById('pay_method').value;
+
+        // Check if no provider is selected
+        if (!provider) {
+            event.preventDefault();
+            document.getElementById('provider-error-message').style.display = 'block';
+        } else {
+            document.getElementById('provider-error-message').style.display = 'none';
+        }
+
+        // Check if no payment method is selected
+        if (!payMethod) {
+            event.preventDefault();
+            document.getElementById('payment-error-message').style.display = 'block';
+        } else {
+            document.getElementById('payment-error-message').style.display = 'none';
+        }
+    });
+</script>
 {% endblock %}

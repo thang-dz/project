@@ -1,53 +1,117 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Return Request Form</title>
-</head>
-<body>
-    <h1>Create Return Request</h1>
-    <form action="{{ url_for('create_return') }}" method="POST">
-        <label for="order_detail_id">Order Detail ID:</label>
-        <input type="text" id="order_detail_id" name="order_detail_id" required>
-        
-        <label for="condition">Condition:</label>
-        <select name="condition" id="condition" required>
-            <option value="Good">Good</option>
-            <option value="Defective">Defective</option>
-            <option value="Requires Repair">Requires Repair</option>
-        </select>
+{% extends 'base.html' %}
 
-        <div id="defective-reason" style="display: none;">
-            <label for="defect_reason">Defect Reason:</label>
-            <input type="text" id="defect_reason" name="defect_reason">
+{% block title %}
+    <title>Create or Inspect Return Request</title>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert alert-dismissible fixed-alert">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
         </div>
+    {% endif %}
+{% endwith %}
 
-        <div id="repair-time" style="display: none;">
-            <label for="repair_time">Estimated Repair Time (days):</label>
-            <input type="number" id="repair_time" name="repair_time" value="3">
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Create Return Request</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/returns/">Returns</a></li>
+        </ol>
+
+        <form method="POST">
+            <!-- Order Detail Selection -->
+            <div class="form-group">
+                <label for="order_detail_id">Order Detail ID:</label>
+                <select id="order_detail_id" name="order_detail_id" class="form-control">
+                    <option value="" disabled selected>Select Order Detail ID</option>
+                    {% for order_detail in order_details %}
+                        <option value="{{ order_detail.order_detail_id }}">
+                            {{ order_detail.order_relation.cus_name }}<br>
+                            Address: {{ order_detail.order_relation.cus_address }}<br>
+                            Order Date: {{ order_detail.order_relation.order_date }}<br>
+                            Order Detail ID: {{ order_detail.order_detail_id }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Product Condition Dropdown
+            <div class="form-group">
+                <label for="condition">Product Condition:</label>
+                <select id="condition" name="condition" class="form-control" required>
+                    <option value="" disabled selected>Select Product Condition</option>
+                    <option value="Good" {% if return and return.condition == 'Good' %}selected{% endif %}>Good</option>
+                    <option value="Damaged" {% if return and return.condition == 'Damaged' %}selected{% endif %}>Damaged</option>
+                </select>
+            </div> -->
+
+            <!-- Refund Method Selection -->
+            <label for="refund_method">Refund Method:</label>
+            <select id="refund_method" name="refund_method" class="form-control">
+                <option value="" disabled selected>Select Refund Method</option>
+                <option value="Original Payment">Original Payment</option>
+                <option value="Store Credit">Store Credit</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+            <br>
+
+            <button type="submit" class="btn btn-primary">Submit Return Request</button>
+            <br><br>
+        </form>
+
+        <div class="card mb-4">
+            <div class="card-header">Return Requests</div>
+            <div class="card-body">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Return Request ID</th>
+                            <th>Order Detail</th>
+                            <th>Condition</th>
+                            <th>Status</th>
+                            <th>Refund Method</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for re in returns %}
+                            <tr>
+                                <td>{{ re.return_id }}</td>
+                                <td>{{ re.order_detail.product_name }}</td>
+                                <td> 
+                                    <form action="{{ url_for('inspect_return', return_id=re.return_id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn cập nhật tình trạng sản phẩm?')" class="d-flex flex-column align-items-start">
+                                        <select name="condition" class="form-control" id="condition-dropdown" onchange="this.form.submit();" {% if re.condition %}disabled{% endif %}>
+                                            <option value="" disabled {% if not re.condition %}selected{% endif %}>Select</option>
+                                            <option value="Good" {% if re.condition == 'Good' %}selected{% endif %}>Good</option>
+                                            <option value="Damaged" {% if re.condition == 'Damaged' %}selected{% endif %}>Damaged</option>
+                                        </select>
+                                        <noscript><button type="submit" class="btn btn-primary">Submit</button></noscript>
+                                    </form>
+                                    
+                                </td>
+                                <td>{{ re.return_status }}</td>
+                                <td>{{ re.refund_method }}</td>
+                                <td>                                    
+                                    <form action="{{ url_for('delete_return', return_id=re.return_id) }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this return request?')">Delete</button>
+                                    </form>
+                                    {% if re.return_status=="Processing" %}
+                                        <a href="{{ url_for('confirm_payment', return_id=re.return_id) }}" class="btn btn-success btn-sm">Confirm</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
+    </div>
+</main>
 
-        <button type="submit">Submit Return Request</button>
-    </form>
 
-    <script>
-        const conditionSelect = document.getElementById('condition');
-        const defectReasonDiv = document.getElementById('defective-reason');
-        const repairTimeDiv = document.getElementById('repair-time');
-
-        conditionSelect.addEventListener('change', function () {
-            if (conditionSelect.value === 'Defective') {
-                defectReasonDiv.style.display = 'block';
-                repairTimeDiv.style.display = 'none';
-            } else if (conditionSelect.value === 'Requires Repair') {
-                repairTimeDiv.style.display = 'block';
-                defectReasonDiv.style.display = 'none';
-            } else {
-                defectReasonDiv.style.display = 'none';
-                repairTimeDiv.style.display = 'none';
-            }
-        });
-    </script>
-</body>
-</html>
+{% endblock %}

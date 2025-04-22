@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Inventory</title>
+{% endblock %}
+
+ {% block content %}
+ {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for item in inventory %}
+        {% if item.quantity < item.import_data.reorder_level %}
+            <div class="alert alert-dismissible fixed-alert">
+                <div class="alert alert-warning">
+                    {{ "Stock is low. Would you like to create a purchase request?" }}
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    {% if messages %}
+        <div class="alert alert-dismissible fixed-alert">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+ 
+ 
+ 
+
+
+
+<main>
+    <div class="container-fluid">
+        <h1 class="mt-4">Dashboard</h1>
+        <ol class="breadcrumb mb-4">
+            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+            <li class="breadcrumb-item">Inventory</li>
+            <li class="breadcrumb-item"><a href="/inventory/">Material</a></li>
+            <li class="breadcrumb-item"><a href="/inventorypro/">Product Return</a></li>
+        </ol>
+      
+        <!-- Inventory List -->
+        <div class="container-fluid">            
+            <div class="card mb-4">
+                <div class="card-header">Product List</div>
+                <div class="card-body">
+                   
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" style="table-layout: fixed;">
+                        <thead>
+                            <tr>                                
+                                <th>Product Name</th>                                 
+                                <th>Quantity</th>                                
+                                <th>Date</th>
+                                <th>Category</th>                                
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventorypro %}
+                                <tr>                                    
+                                    <td>{{item.product_name }}</td>                            
+                                    <td>{{item.quantity}}</td>                                   
+                                    <td>{{item.date }}</td>
+                                    <td></td>                                    
+                                           
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table> 
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+
+{% endblock %}

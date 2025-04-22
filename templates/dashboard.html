@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+
 <main>
     <div class="container-fluid">
         <h1 class="mt-4">Business Dashboard</h1>
@@ -17,23 +18,52 @@
             <div class="col-8 mb-4">
                 <div class="card">
                     <div class="card-header">
-                        <i class="fas fa-chart-line mr-1"></i> Sales Revenue Trends
+                        <i class="fas fa-chart-line mr-1"></i> Sales Revenue Trend
                     </div>
                     <div class="card-body">
+                        <!-- Add dropdown for month selection -->
+                        <select id="monthFilter" class="form-control mb-3">
+                            <option value="all">All Months</option>
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
                         <canvas id="salesChart" class="chart"></canvas>
+                        <div id="noDataMessage" style="display:none; text-align:center; font-size:16px; color:#888;">
+                            Not enough data to display sales trends.
+                        </div>
                     </div>
                 </div>
             </div>
+
             <div class="col-4 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <i class="fas fa-chart-pie mr-1"></i> Order Status Distribution
                     </div>
                     <div class="card-body">
+                        <!-- Add dropdown for day/week filter -->
+                        <select id="dateFilter" class="form-control mb-3">
+                            <option value="day">By Day</option>
+                            <option value="week">By Week</option>
+                        </select>
                         <canvas id="orderStatusChart" class="chart"></canvas>
+                        <div id="noDataMessageOrderStatus" style="display:none; text-align:center; font-size:16px; color:#888;">
+                            No order status data available
+                        </div>
                     </div>
                 </div>
             </div>
+
             <div class="col-4 mb-4">
                 <div class="card">
                     <div class="card-header">
@@ -41,6 +71,9 @@
                     </div>
                     <div class="card-body">
                         <canvas id="topProductsChart" class="chart"></canvas>
+                        <div id="noDataMessageProducts" style="display:none; text-align:center; font-size:16px; color:#888;">
+                            No sales data available
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,47 +84,70 @@
 <!-- JavaScript: Chart.js integration -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Sales Revenue Trend Chart (Bar and Line Chart)
-    var allMonths = [
-        "01", "02", "03", "04", "05", "06", "07", 
-        "08", "09", "10", "11", "12"
-    ];
+// Sales Revenue Trend Chart (Bar and Line Chart)
+var allMonths = [
+    "01", "02", "03", "04", "05", "06", "07", 
+    "08", "09", "10", "11", "12"
+];
 
-    var salesData = {{ sales_data | tojson }};  // Sales data from Django context
+var salesData = {{ sales_data | tojson }};  // Sales data from Django context
 
-    var sales = allMonths.map(function(month) {
-        var monthData = salesData.find(function(item) { 
-            return item.month === month; 
-        });
-        return monthData ? monthData.total_sales : 0;  // Default to 0 if no data exists for a month
+// Function to filter and update the chart based on selected month
+function updateChartByMonth(month) {
+    var filteredSalesData = (month === "all") ? salesData : salesData.filter(function(item) {
+        return item.month === month;
     });
 
+    // If there is no data for the selected month, show "No data" message
+    if (filteredSalesData.length === 0) {
+        document.getElementById('salesChart').style.display = 'none';  // Hide the chart
+        document.getElementById('noDataMessage').style.display = 'block';  // Show the "No data" message
+    } else {
+        document.getElementById('salesChart').style.display = 'block';  // Show the chart
+        document.getElementById('noDataMessage').style.display = 'none';  // Hide the "No data" message
+    }
+
+    // Prepare sales data for chart rendering
+    var sales = allMonths.map(function(monthLabel) {
+        var monthData = filteredSalesData.find(function(item) { 
+            return item.month === monthLabel; 
+        });
+        return monthData ? monthData.total_sales : 0;  // Default to 0 if no data exists for that month
+    });
+
+    // Destroy existing chart if present before creating a new one
+    if (window.salesChartInstance) {
+        window.salesChartInstance.destroy();  // Destroy the existing chart instance
+    }
+
+    // Create the bar chart and the line chart on the same axis
     var ctx = document.getElementById('salesChart').getContext('2d');
-    new Chart(ctx, {
+    window.salesChartInstance = new Chart(ctx, {
         type: 'bar',  // Bar chart for sales revenue
         data: {
             labels: allMonths,  // Months as labels
             datasets: [
                 {
-                    label: 'Sales Revenue (Bar)',
+                    label: 'Sales Revenue (Per Month)',
                     data: sales,
-                    backgroundColor: 'rgba(138, 43, 226, 0.6)',  // Purple for bars
-                    borderColor: 'rgb(138, 43, 226)',
-                    borderWidth: 1,
+                    backgroundColor: 'rgb(246,213,92)',  
+                    borderColor: 'rgb(246,213,92)',
+                    borderWidth: 0.5,
                     barPercentage: 0.5,  // Control bar width
                     categoryPercentage: 0.5
                 },
                 {
-                    label: 'Sales Revenue (Line)',
+                    label: 'Line from 0 to Sales Value',  // Line chart dataset
                     data: sales,
-                    borderColor: 'rgb(75, 0, 130)',  // Purple for the line
-                    fill: false,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointRadius: 5,
-                    pointBackgroundColor: 'rgb(75, 0, 130)',  // Purple for points
-                    order: 2,
-                    pointStyle: 'circle'
+                    type: 'line',  // Define this as a line chart
+                    borderColor: 'rgb(75, 192, 192)',  // Line color
+                    borderWidth: 1,  // Thicker line for visibility
+                    fill: false,  // Don't fill under the line
+                    tension: 0.2,  // Smooth line
+                    pointRadius: 3,  // Points on the line
+                    pointBackgroundColor: 'rgb(75, 192, 192)',  // Point color
+                    pointStyle: 'circle',  // Ensure the points are circles and not other shapes
+                    pointHitRadius: 5  // Increase hit radius for easier selection
                 }
             ]
         },
@@ -100,10 +156,17 @@
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { borderColor: 'rgba(0, 0, 0, 0.1)', lineWidth: 1 }
+                    grid: { borderColor: 'rgba(0, 0, 0, 0.1)', lineWidth: 1 },
+                    ticks: {
+                        callback: function(value) { return (value / 1000000).toLocaleString() + ' M VND'; }  // Convert to M VND (million)
+                    }
                 },
                 x: {
-                    grid: { display: false }
+                    grid: { display: false },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Month'  // Label for the X-axis as "Month"
+                    }
                 }
             },
             plugins: {
@@ -113,26 +176,88 @@
             }
         }
     });
+}
 
-    // Order Status Distribution (Pie Chart)
-    var orderStatusData = {{ order_status_data | tojson }};  // Order status data from Django context
-    var statusLabels = orderStatusData.map(function(item) { return item.status; });
-    var statusCounts = orderStatusData.map(function(item) { return item.count; });
+// Initial chart load (for "all" months)
+document.addEventListener("DOMContentLoaded", function() {
+    updateChartByMonth("all");
+});
 
-    var ctx2 = document.getElementById('orderStatusChart').getContext('2d');
-    new Chart(ctx2, {
-        type: 'pie',
-        data: {
-            labels: statusLabels,
-            datasets: [{
-                data: statusCounts,
-                backgroundColor: ['#337357', '#6D9F71', '#FFDBE5']
-            }]
-        }
-    });
+// Event listener for the month filter
+document.getElementById('monthFilter').addEventListener('change', function() {
+    var selectedMonth = this.value;
+    updateChartByMonth(selectedMonth);  // Update chart when a month is selected
+});
 
-    // Top 3 Best-Selling Products (Bar Chart)
-    var topProducts = {{ top_products | tojson }};  // Top products data from Django context
+let orderStatusData = [];
+
+function fetchOrderStatusData(dateFilter) {
+    fetch(`/order_status_data?date_filter=${dateFilter}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Lỗi khi truy vấn dữ liệu trạng thái đơn hàng');
+            }
+            return response.json();
+        })
+        .then(data => {
+            orderStatusData = data;
+            const chartElement = document.getElementById('orderStatusChart');
+            const noDataMessage = document.getElementById('noDataMessageOrderStatus');
+
+            if (orderStatusData.length === 0) {
+                chartElement.style.display = 'none';  // Ẩn biểu đồ khi không có dữ liệu
+                noDataMessage.style.display = 'block';  // Hiển thị thông báo không có dữ liệu
+            } else {
+                const statusLabels = orderStatusData.map(item => item.status);
+                const statusCounts = orderStatusData.map(item => item.count);
+
+                // Hủy biểu đồ cũ trước khi tạo mới
+                const ctx2 = chartElement.getContext('2d');
+                if (window.orderStatusChartInstance) {
+                    window.orderStatusChartInstance.destroy();
+                }
+
+                // Tạo biểu đồ tròn mới
+                window.orderStatusChartInstance = new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: statusLabels,
+                        datasets: [{
+                            data: statusCounts,
+                            backgroundColor: ['#337357', '#6D9F71', '#FFDBE5']
+                        }]
+                    }
+                });
+
+                // Hiển thị biểu đồ và ẩn thông báo "Không có dữ liệu"
+                chartElement.style.display = 'block';
+                noDataMessage.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Lỗi khi lấy dữ liệu trạng thái đơn hàng:', error);
+            document.getElementById('noDataMessageOrderStatus').textContent = 'Không thể tải dữ liệu. Vui lòng thử lại sau.';
+            document.getElementById('noDataMessageOrderStatus').style.display = 'block';
+        });
+}
+
+// Lắng nghe sự kiện thay đổi bộ lọc ngày/tuần
+document.getElementById('dateFilter').addEventListener('change', function() {
+    fetchOrderStatusData(this.value);
+});
+
+// Gọi hàm để lấy dữ liệu mặc định khi trang tải lần đầu
+fetchOrderStatusData('day');
+
+
+
+// Top 3 Best-Selling Products (Bar Chart)
+var topProducts = {{ top_products | tojson }};  // Top products data from Django context
+
+if (topProducts.length === 0) {
+    document.getElementById('topProductsChart').style.display = 'none';  // Hide the chart
+    document.getElementById('noDataMessageProducts').style.display = 'block';  // Show the "No data" message
+} else {
     var productNames = topProducts.map(function(item) { return item.product_name; });
     var quantities = topProducts.map(function(item) { return item.total_quantity; });
 
@@ -150,6 +275,10 @@
             }]
         }
     });
+    document.getElementById('topProductsChart').style.display = 'block';  // Ensure the chart is visible
+    document.getElementById('noDataMessageProducts').style.display = 'none';  // Hide the "No data" message
+}
+
 </script>
 
 <style>
