@@ -1,63 +1,80 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>Confirm Payment</title>
+    <title>Confirm Payment</title>
 {% endblock %}
 
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-    <div class="alert alert-dismissible">
+    <div class="alert alert-dismissible fade show fixed-alert">
         {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
+            <div class="alert alert-{{ category }} mb-2">
+                {{ message }}
+            </div>
         {% endfor %}
     </div>
 {% endif %}
 {% endwith %}
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Confirm Payment </h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/shipping-list">Shipping List</a></li>
-            <li class="breadcrumb-item active">Confirm Payment</li>
-        </ol>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
+                <i class="fas fa-credit-card"></i> Confirm Payment for Order #{{ return_request.order_detail.order_id }}
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/shipping-list" class="text-decoration-none text-muted">Shipping List</a></li>
+                <li class="breadcrumb-item active">Confirm Payment</li>
+            </ol>
+        </div>
 
-        <!-- Confirm Shipping Payment Form -->
-        <div class="card mb-4">
-            <div class="card-header">Payment Confirmation</div>
+        <!-- Confirm Payment Form -->
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-dollar-sign"></i> Payment Confirmation
+            </div>
             <div class="card-body">
                 <form method="POST">
+                    <!-- Product Name -->
                     <div class="form-group">
-                        <label for="payment_amount">Product Name</label>
-                        <input type="text" class="form-control" id="payment_amount" name="payment_amount" value="{{ return_request.order_detail.product_name }}" readonly>
-                        
-                    </div> 
-                   
-                    <div class="form-group">
-                        <label for="payment_amount">Payment Methods </label>
-                        <input type="text" class="form-control" id="payment_amount" name="payment_amount"  value="{{  return_request.refund_method }}" readonly>
-                            
-                    </div> 
-                    <div class="form-group">
-                        <label for="payment_amount"> Quantity </label>
-                        <input type="text" class="form-control" id="payment_amount" name="payment_amount"  value="{{  return_request.order_detail.quantity }}" readonly>
-                            
-                    </div> 
-                    
-                    <div class="form-group">
-                        <label for="price">Price <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="price" name="price"  value="{{ return_request.order_detail.order_relation.price }}" readonly>
-                        
-                    </div>                  
+                        <label for="product_name"><i class="fas fa-cogs"></i> Product Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="product_name" name="product_name" value="{{ return_request.order_detail.product_name }}" readonly>
+                    </div>
 
-                    
-                    <button type="submit" class="btn btn-success">Confirm</button>
-                    <a href="{{ url_for('create_return') }}" class="btn btn-danger ">Back</a>
-                    
+                    <!-- Payment Methods -->
+                    <div class="form-group">
+                        <label for="refund_method"><i class="fas fa-credit-card"></i> Payment Method <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="refund_method" name="refund_method" value="{{ return_request.refund_method }}" readonly>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="form-group">
+                        <label for="quantity"><i class="fas fa-box"></i> Quantity <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="quantity" name="quantity" value="{{ return_request.order_detail.quantity }}" readonly>
+                    </div>
+
+                    <!-- Price -->
+                    <div class="form-group">
+                        <label for="price"><i class="fas fa-tag"></i> Price <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="price" name="price" value="{{ return_request.order_detail.order_relation.price }}" readonly>
+                    </div>
+
+                    <!-- Total Payment -->
+                    <div class="form-group">
+                        <label for="payment_amount"><i class="fas fa-money-bill-wave"></i> Total Payment <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" value="{{ return_request.order_detail.order_relation.price }}" required>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Confirm Payment</button>
+                    <a href="{{ url_for('create_return') }}" class="btn btn-danger"><i class="fas fa-arrow-left"></i> Back</a>
                 </form>
             </div>
         </div>
     </div>
 </main>
+
+
 {% endblock %}

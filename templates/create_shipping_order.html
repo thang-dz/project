@@ -6,52 +6,62 @@
 
 {% block content %}
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Shipping Details for Order {{order.order_id}}</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item active">Shipping</li>
-        </ol>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
+                <i class="fas fa-shipping-fast"></i> Shipping Details for Order {{ order.order_id }}
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item active">Shipping</li>
+            </ol>
+        </div>
+
+        <!-- Error Messages -->
         <div id="payment-error-message" class="alert alert-danger mt-3" style="display:none;">Please select a payment method to complete the transaction.</div>
-        <!-- Error Message for Shipping Provider -->
         <div id="provider-error-message" class="alert alert-danger mt-3" style="display:none;">Please choose a shipping provider before proceeding.</div>
 
         <!-- Create Shipping Form -->
-        <div class="card mb-4">
-            <div class="card-header">Shipping Details</div>
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-box-open"></i> Shipping Details
+            </div>
             <div class="card-body">
-                
                 <form method="POST" id="shipping-order-form">
                     <input type="hidden" name="order_id" value="{{ order.order_id }}">
 
+                    <!-- Customer Details -->
                     <div class="form-group">
-                        <label for="material_name">Customer Name</label>
-                        <input type="text" name="material_name" id="material_name" class="form-control" value="{{ order.cus_name }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="material_name">Customer Contact</label>
-                        <input type="text" name="material_name" id="material_name" class="form-control" value="{{ order.cus_contact }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="material_name">Customer Address</label>
-                        <input type="text" name="material_name" id="material_name" class="form-control" value="{{ order.cus_address }}" readonly>
+                        <label for="cus_name"><i class="fas fa-user"></i> Customer Name</label>
+                        <input type="text" name="cus_name" id="cus_name" class="form-control" value="{{ order.cus_name }}" readonly>
                     </div>
 
-                    <!-- Payment Method Dropdown with Placeholder -->
                     <div class="form-group">
-                        <label for="pay_method">Payment Method</label>
-                        <select class="form-control" id="pay_method" name="pay_method" >
+                        <label for="cus_contact"><i class="fas fa-phone"></i> Customer Contact</label>
+                        <input type="text" name="cus_contact" id="cus_contact" class="form-control" value="{{ order.cus_contact }}" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cus_address"><i class="fas fa-address-book"></i> Customer Address</label>
+                        <input type="text" name="cus_address" id="cus_address" class="form-control" value="{{ order.cus_address }}" readonly>
+                    </div>
+
+                    <!-- Payment Method Dropdown -->
+                    <div class="form-group">
+                        <label for="pay_method"><i class="fas fa-credit-card"></i> Payment Method <span class="text-danger">*</span></label>
+                        <select class="form-control" id="pay_method" name="pay_method">
                             <option value="" disabled selected>Please choose</option>
-                            <option value="Credit Card" {% if order.pay_method == 'Credit Card' %}selected{% endif %}>Credit Card</option>
+                            <option value="Credit Card" {% if order.pay_method == 'Credit Card' %}selected{% endif %}>Credit Card </option>
                             <option value="PayPal" {% if order.pay_method == 'PayPal' %}selected{% endif %}>PayPal</option>
                             <option value="Cash on Delivery" {% if order.pay_method == 'Cash on Delivery' %}selected{% endif %}>Cash on Delivery</option>
                         </select>
                     </div>
-        
-                    <!-- Shipping Provider Dropdown with Placeholder -->
+
+                    <!-- Shipping Provider Dropdown -->
                     <div class="form-group">
-                        <label for="provider">Logistics Provider</label>
-                        <select class="form-control" id="provider" name="provider" >
+                        <label for="provider"><i class="fas fa-truck"></i> Logistics Provider <span class="text-danger">*</span></label>
+                        <select class="form-control" id="provider" name="provider">
                             <option value="" disabled selected>Please choose</option>
                             <option value="GiaoHangNhanh" {% if order.provider == 'GiaoHangNhanh' %}selected{% endif %}>GiaoHangNhanh</option>
                             <option value="J&T Express" {% if order.provider == 'J&T Express' %}selected{% endif %}>J&T Express</option>
@@ -60,19 +70,18 @@
                             <option value="BEST Express" {% if order.provider == 'BEST Express' %}selected{% endif %}>BEST Express</option>
                         </select>
                     </div>
-        
-                    <!-- Shipping Cost Input -->
+
+                    <!-- Shipping Cost -->
                     <div class="form-group">
-                        <label for="shipping_cost">Shipping Cost</label>
+                        <label for="shipping_cost"><i class="fas fa-money-bill-wave"></i> Shipping Cost <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" id="shipping_cost" name="shipping_cost" step="0.01" required>
                         <small class="form-text text-muted">The shipping cost will be calculated based on the selected provider.</small>
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Create Ship</button>
-                    <a href="/shipping-queue/" class="btn btn-secondary">Back</a>
+                    <!-- Submit Buttons -->
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-truck-loading"></i> Create Ship</button>
+                    <a href="/shipping-queue/" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
                 </form>
-                <!-- Error Message for Payment Method -->
-                
             </div>
         </div>
     </div>

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>Inventory</title>
+    <title> Inventory</title>
 {% endblock %}
 
- {% block content %}
- {% with messages = get_flashed_messages(with_categories=true) %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
     {% for item in inventory %}
         {% if item.quantity < item.import_data.reorder_level %}
             <div class="alert alert-dismissible fixed-alert">
@@ -15,138 +15,104 @@
             </div>
         {% endif %}
     {% endfor %}
-
     {% if messages %}
-        <div class="alert alert-dismissible fixed-alert">
+        <div class="alert alert-dismissible fade show fixed-alert">
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
+                <div class="alert alert-{{ category }} mb-2">
+                    {{ message }}
+                </div>
             {% endfor %}
         </div>
     {% endif %}
 {% endwith %}
 
- 
- 
- 
-
-
-
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Dashboard</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item">Inventory</li>
-            <li class="breadcrumb-item"><a href="/inventory/">Material</a></li>
-            <li class="breadcrumb-item"><a href="/inventorypro/">Product Return</a></li>
-        </ol>
-      
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold">Inventory</h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/dashboard" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="" class="text-decoration-none text-muted">Inventory</a></li>
+                <li class="breadcrumb-item"><a href="/inventory/" class="text-decoration-none text-muted">Material</a></li>
+                <li class="breadcrumb-item"><a href="/inventorypro/" class="text-decoration-none text-muted">Product Return</a></li>
+            </ol>
+        </div>
+
         <!-- Inventory List -->
-        <div class="container-fluid">            
-            <div class="card mb-4">
-                <div class="card-header">Product List</div>
-                <div class="card-body">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" style="table-layout: fixed;">
-                        <thead>
-                            <tr>
-                                
-                                <th>Material Name</th>                                 
-                                <th>Material Quantity</th>                                
-                                <th>Stock-in Date</th>
-                                <th>Category</th>
-                                <th>WareHouse</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in inventory %}
-                                <tr>
-                                    
-                                    <td>{{ item.import_data.material_name }}</td> <!-- Access Material Name from Import -->
-                                   
-                                    <td>                                        
-                                        {% if  item.quantity  < item.import_data.reorder_level %}
-                                            <span class="text-danger">Stock data unavailable (3). Please update inventory records.</span>
-                                        {% else %}
-                                            {{ item.quantity  }} <!-- Display available stock -->
-                                        {% endif %}
-                                    
-                                    </td>
-                                   
-                                    <td>{{ item.transaction_date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
-                                    <td>
-                                        {% if item.category is none %}
-                                        <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex flex-column align-items-start">
-                                            <select name="category" required class="form-control mb-2" onkeydown="if(event.key==='Enter'){ this.form.submit(); }">
-                                                <option value="" disabled selected>Select</option>
-                                                <option value="fabric">Fabric</option>
-                                                <option value="threads">Threads</option>
-                                                <option value="buttons">Buttons</option>
-                                                <option value="accessories">Accessories</option>
-                                            </select>
-                                            <!-- Ẩn nút Submit, dùng như dự phòng nếu cần -->
-                                            <button type="submit" class="btn btn-primary d-none">Classify</button>
-                                        </form>
-                                        {% else %}
-                                            {{ item.category }}
-                                        {% endif %}
-                                    </td>
-                                    
-                                    <td>
-                                        {% if item.warehouse is none %}
-                                            <form action="{{ url_for('classify_warehouse', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex flex-column align-items-start">
-                                                <input type="text" name="warehouse" placeholder="Enter" required class="form-control mb-2">
-                                                <!-- <button type="submit" class="btn btn-primary">Classify</button> -->
-                                            </form>
-                                        {% else %}
-                                            {{ item.warehouse }}
-                                        {% endif %}
-                                    </td>
-                                    
-                                    
-                                    
-                                    <td>
-                                        <form action="{{ url_for('delete_inventory', inventory_id=item.stockTran_id) }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this inventory item?')">Delete</button>
-                                        </form>
-                                       
-                                        {% if item.import_data and item.quantity < item.import_data.reorder_level %}
-                                            <a href="{{ url_for('create_purchase_request', import_id=item.stockTran_id) }}" class="btn btn-primary btn-sm">Create Purchase</a>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <br><br>
-                    <!-- <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" style="table-layout: fixed;">
-                        <thead>
-                            <tr>                                
-                                <th>Product Name</th>                                 
-                                <th>Quantity</th>                                
-                                <th>Stock-in Date</th>
-                                <th>Category</th>                                
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in inventory %}
-                                <tr>                                    
-                                    <td></td> <!-- Access Material Name from Import -->                                   
-                                    <!-- <td> </td>                                   
-                                    <td></td>
-                                    <td></td>                                    
-                                    <td> </td>        
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table> --> 
-                </div>
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-cogs"></i> Product List
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0" style="table-layout: fixed;">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Material Name</th>
+                            <th>Material Quantity</th>
+                            <th>Stock-in Date</th>
+                            <th>Category</th>
+                            <th>Warehouse</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inventory %}
+                        <tr>
+                            <td>{{ item.import_data.material_name }}</td>
+                            <td>
+                                {% if item.quantity < item.import_data.reorder_level %}
+                                    <span class="text-danger">Stock is low! Please update records.</span>
+                                {% else %}
+                                    {{ item.quantity }}
+                                {% endif %}
+                            </td>
+                            <td>{{ item.transaction_date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                            <td>
+                                {% if item.category is none %}
+                                    <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex flex-column align-items-start">
+                                        <select name="category" required class="form-control mb-2">
+                                            <option value="" disabled selected>Select</option>
+                                            <option value="fabric">Fabric</option>
+                                            <option value="threads">Threads</option>
+                                            <option value="buttons">Buttons</option>
+                                            <option value="accessories">Accessories</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary d-none">Classify</button>
+                                    </form>
+                                {% else %}
+                                    {{ item.category }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.warehouse is none %}
+                                    <form action="{{ url_for('classify_warehouse', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex flex-column align-items-start">
+                                        <input type="text" name="warehouse" placeholder="Enter warehouse" required class="form-control mb-2">
+                                    </form>
+                                {% else %}
+                                    {{ item.warehouse }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.import_data and item.quantity < item.import_data.reorder_level %}
+                                    <a href="{{ url_for('create_purchase_request', import_id=item.stockTran_id) }}" class="btn btn-primary btn-sm hover-shadow">
+                                        <i class="fas fa-cart-plus"></i> Create Purchase
+                                    </a>
+                                {% else %}
+                                <form action="{{ url_for('delete_inventory', inventory_id=item.stockTran_id) }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm hover-shadow" onclick="return confirm('Are you sure you want to delete this inventory item?')">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </main>
-
-
 
 {% endblock %}

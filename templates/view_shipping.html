@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>Shipping Details</title>
+    <title>Shipping Details</title>
 {% endblock %}
 
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-        <div class="alert alert-dismissible fixed-alert">
+        <div class="alert alert-dismissible fade show fixed-alert">
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">{{ message }}</div>
             {% endfor %}
@@ -15,17 +15,24 @@
     {% endif %}
 {% endwith %}
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Shipping Details for Order #{{ shipping.order_id }}</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/shipping-list">Shipping List</a></li>
-            <li class="breadcrumb-item active">Shipping Details</li>
-        </ol>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
+                <i class="fas fa-truck"></i> Shipping Details for Order #{{ shipping.order_id }}
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/shipping-list" class="text-decoration-none text-muted">Shipping List</a></li>
+                <li class="breadcrumb-item active">Shipping Details</li>
+            </ol>
+        </div>
 
         <!-- Shipping Order Details -->
         <div class="card mb-4">
-            <div class="card-header">Shipping Information</div>
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-info-circle"></i> Shipping Information
+            </div>
             <div class="card-body">
                 {% if shipping.shipping_status %}
                     <p><strong>Tracking Code:</strong> {{ shipping.tracking_code }}</p>
@@ -40,23 +47,24 @@
                 {% endif %}
             </div>
         </div>
-            <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this shipping?')">Cancel Shipping</button>
-            </form>
 
+        <!-- Cancel Shipping Button -->
         {% if shipping.shipping_status == "Processing" %}
             <form action="{{ url_for('cancel_shipping', shipping_id=shipping.shipping_id) }}" method="POST">
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this shipping?')">Cancel Shipping</button>
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this shipping?')">
+                    <i class="fas fa-times-circle"></i> Cancel Shipping
+                </button>
             </form>
         {% elif shipping.shipping_status == "Shipped" %}
             <p>This order has already been shipped and cannot be canceled.</p>
-
         {% else %}
-            <p>Shipping has been {{shipping.shipping_status}}. No further actions can be taken.</p>
+            <p>Shipping has been {{ shipping.shipping_status }}. No further actions can be taken.</p>
         {% endif %}
 
-        <a href="/shipping-list/" class="btn btn-info">Back</a>
-
+        <!-- Back Button -->
+        <a href="/shipping-list/" class="btn btn-info mt-3">
+            <i class="fas fa-arrow-left"></i> Back to Shipping List
+        </a>
     </div>
 </main>
 {% endblock %}

@@ -46,6 +46,38 @@
 *::after {
   box-sizing: border-box;
 }
+ /* Hover effect on buttons */
+ .btn:hover {
+  background-color: #0056b3; /* Darker blue */
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+/* Hover effect on table rows */
+tr:hover {
+  background-color: #f1f1f1;
+  cursor: pointer;
+}
+
+/* Add shadow effect on hover */
+.hover-shadow:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Form fields */
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
 
 html {
   font-family: sans-serif;

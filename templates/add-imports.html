@@ -1,131 +1,99 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    <title>Add New Order</title>
+    <title>Create Purchase</title>
 {% endblock %}
 
 {% block content %}
 <main>
-    <div class="container-fluid px-4">
-        <h1 class="mt-4 mb-3 text-primary">Add New Order</h1>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb bg-light p-2 rounded mb-4">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="fas fa-home me-1"></i>Dashboard</a></li>
-                <li class="breadcrumb-item active">Add Order</li>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
+                <i class="fas fa-box-open"></i> Create Purchase
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item active">Create Purchase</li>
             </ol>
-        </nav>
+        </div>
 
-        <div class="card mb-4 shadow">
-            <div class="card-header bg-primary text-white">
-                <i class="fas fa-plus-circle me-1"></i> New Order
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-plus-circle"></i> New Order
             </div>
             <div class="card-body">
-                <form method="POST" class="needs-validation" novalidate>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="material_name" class="form-label fw-bold">Material Name</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-box"></i></span>
-                                <input type="text" name="material_name" id="material_name" class="form-control" value="{{ material_name }}" readonly>
-                            </div>
-                        </div>
-                    
-                        <div class="col-md-6 mb-3">
-                            <label for="reorder_level" class="form-label fw-bold">Reorder Level</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-level-down-alt"></i></span>
-                                <input type="number" name="reorder_level" id="reorder_level" class="form-control" value="{{ reorder_level }}" readonly>
-                            </div>
-                        </div>
+                <form method="POST">
+                    <!-- Material Name -->
+                    <div class="form-group">
+                        <label for="material_name"><i class="fas fa-cogs"></i> Material Name</label>
+                        <input type="text" name="material_name" id="material_name" class="form-control" value="{{ material_name }}" readonly>
                     </div>
-                
-                    <div class="mb-3">
-                        <label for="quantity_in_stock" class="form-label fw-bold">Quantity to Order <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-sort-amount-up"></i></span>
-                            <input type="number" name="quantity_in_stock" id="quantity_in_stock" min="0" class="form-control" value="{{ prefilled_quantity }}" required>
-                            <div class="invalid-feedback">
-                                Please enter a valid quantity.
-                            </div>
-                        </div>
+
+                    <!-- Reorder Level -->
+                    <div class="form-group">
+                        <label for="reorder_level"><i class="fas fa-arrow-up"></i> Reorder Level</label>
+                        <input type="number" name="reorder_level" id="reorder_level" class="form-control" value="{{ reorder_level }}" readonly>
                     </div>
-                
-                    <div class="card mb-4 bg-light">
-                        <div class="card-header bg-secondary text-white">
-                            <i class="fas fa-truck me-1"></i> Supplier Information
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="sup_name" class="form-label fw-bold">Supplier Name <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-building"></i></span>
-                                        <input type="text" name="sup_name" id="sup_name" value="{{ sup_name }}" class="form-control" required>
-                                        <div class="invalid-feedback">
-                                            Please provide a supplier name.
-                                        </div>
-                                    </div>
-                                </div>
-                            
-                                <div class="col-md-6 mb-3">
-                                    <label for="sup_contact_info" class="form-label fw-bold">Supplier Contact Info <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                                        <input type="text" name="sup_contact_info" id="sup_contact_info" value="{{ sup_contact_info }}" class="form-control" required>
-                                        <div class="invalid-feedback">
-                                            Please provide supplier contact information.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        
-                            <div class="mb-3">
-                                <label for="sup_address" class="form-label fw-bold">Supplier Address <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
-                                    <textarea name="sup_address" id="sup_address" class="form-control" rows="2" required>{{ sup_address }}</textarea>
-                                    <div class="invalid-feedback">
-                                        Please provide a supplier address.
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
+                    <!-- Quantity to Order -->
+                    <div class="form-group">
+                        <label for="quantity_in_stock"><i class="fas fa-box"></i> Quantity to Order <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity_in_stock" id="quantity_in_stock" min="0" class="form-control" value="{{ prefilled_quantity }}" required>
                     </div>
-                
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">
-                            <i class="fas fa-times me-1"></i> Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i> Create Order
-                        </button>
+
+                    <!-- Supplier Name -->
+                    <div class="form-group">
+                        <label for="sup_name"><i class="fas fa-user"></i> Supplier Name</label>
+                        <input type="text" name="sup_name" id="sup_name" value="{{ sup_name }}" class="form-control" required>
                     </div>
+
+                    <!-- Supplier Contact Info -->
+                    <div class="form-group">
+                        <label for="sup_contact_info"><i class="fas fa-phone"></i> Supplier Contact Info</label>
+                        <input type="text" name="sup_contact_info" id="sup_contact_info" value="{{ sup_contact_info }}" class="form-control" required>
+                    </div>
+
+                    <!-- Supplier Address -->
+                    <div class="form-group">
+                        <label for="sup_address"><i class="fas fa-map-marker-alt"></i> Supplier Address</label>
+                        <input type="text" name="sup_address" id="sup_address" value="{{ sup_address }}" class="form-control" required>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus-circle"></i> Add Import</button>
                 </form>
             </div>
         </div>
     </div>
 </main>
 
-<script>
-// Bootstrap form validation
-(function () {
-    'use strict'
-    
-    // Fetch all forms that need validation
-    var forms = document.querySelectorAll('.needs-validation')
-    
-    // Loop over them and prevent submission
-    Array.prototype.slice.call(forms)
-        .forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault()
-                    event.stopPropagation()
-                }
-                
-                form.classList.add('was-validated')
-            }, false)
-        })
-})()
-</script>
+<!-- Optional: Add some custom styles for hover and focus -->
+<style>
+    /* Hover effect on buttons */
+    .btn:hover {
+        background-color: #0056b3; /* Darker blue */
+        transform: translateY(-3px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    /* Focus effect on form inputs */
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+
+    /* Add spacing and consistent layout */
+    .form-group label {
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .form-group input {
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 14px;
+    }
+</style>
 {% endblock %}

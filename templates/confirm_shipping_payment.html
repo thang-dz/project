@@ -1,54 +1,69 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>Confirm Shipping Payment</title>
+    <title>Confirm Shipping Payment</title>
 {% endblock %}
 
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-    <div class="alert alert-dismissible">
+    <div class="alert alert-dismissible fade show fixed-alert">
         {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
+            <div class="alert alert-{{ category }} mb-2">
+                {{ message }}
+            </div>
         {% endfor %}
     </div>
 {% endif %}
 {% endwith %}
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Confirm Shipping Payment for Order #{{ shipping.order_id }}</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/shipping-list">Shipping List</a></li>
-            <li class="breadcrumb-item active">Confirm Payment</li>
-        </ol>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
+                <i class="fas fa-credit-card"></i> Confirm Shipping Payment for Order #{{ shipping.order_id }}
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/shipping-list" class="text-decoration-none text-muted">Shipping List</a></li>
+                <li class="breadcrumb-item active">Confirm Payment</li>
+            </ol>
+        </div>
 
         <!-- Confirm Shipping Payment Form -->
-        <div class="card mb-4">
-            <div class="card-header">Payment Confirmation</div>
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-dollar-sign"></i> Payment Confirmation
+            </div>
             <div class="card-body">
                 <form method="POST">
+                    <!-- Order Price -->
                     <div class="form-group">
-                        <label for="payment_amount">Order Price</label>
-                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{ shipping.shipping_cost }}" readonly>
-                        
-                    </div> 
-                    <div class="form-group">
-                        <label for="payment_amount">Shipping Cost</label>
-                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{  shipping.order.price }}" readonly>
-                        
-                    </div> 
-                    <div class="form-group">
-                        <label for="payment_amount">Payment Amount <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{ shipping.shipping_cost + shipping.order.price }}" required>
-                        
-                    </div>                  
+                        <label for="order_price"><i class="fas fa-tag"></i> Order Price</label>
+                        <input type="number" class="form-control" id="order_price" name="order_price" step="0.01" value="{{ shipping.shipping_cost }}" readonly>
+                    </div>
 
-                    <button type="submit" class="btn btn-primary">Confirm Payment</button>
-                    <a href="{{ url_for('shipping_list') }}" class="btn btn-secondary">Back </a>
+                    <!-- Shipping Cost -->
+                    <div class="form-group">
+                        <label for="shipping_cost"><i class="fas fa-truck"></i> Shipping Cost</label>
+                        <input type="number" class="form-control" id="shipping_cost" name="shipping_cost" step="0.01" value="{{ shipping.order.price }}" readonly>
+                    </div>
+
+                    <!-- Total Payment Amount -->
+                    <div class="form-group">
+                        <label for="payment_amount"><i class="fas fa-money-bill-wave"></i> Payment Amount <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{ shipping.shipping_cost + shipping.order.price }}" required>
+                    </div>
+
+                    <!-- Submit and Back Buttons -->
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-check-circle"></i> Confirm Payment</button>
+                    <a href="{{ url_for('shipping_list') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
                 </form>
             </div>
         </div>
     </div>
 </main>
+
+
+
 {% endblock %}

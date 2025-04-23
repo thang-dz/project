@@ -6,66 +6,68 @@
 
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div class="alert alert-dismissible fixed-alert">
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-    {% endif %}
+{% if messages %}
+    <div class="alert alert-dismissible fade show fixed-alert">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-2">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 {% endwith %}
 
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Create Return Request</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/returns/">Returns</a></li>
-        </ol>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
+                <i class="fas fa-undo"></i> Create Return Request
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/create-return/" class="text-decoration-none text-muted">Create Return Request</a></li>
+                
+            </ol>
+        </div>
 
+        <!-- Create Return Request Form -->
         <form method="POST">
-            <!-- Order Detail Selection -->
             <div class="form-group">
-                <label for="order_detail_id">Order Detail ID:</label>
-                <select id="order_detail_id" name="order_detail_id" class="form-control">
+                <label for="order_detail_id"><i class="fas fa-box"></i> Order Detail ID <span class="text-danger">*</span></label>
+                <select id="order_detail_id" name="order_detail_id" class="form-control" required>
                     <option value="" disabled selected>Select Order Detail ID</option>
                     {% for order_detail in order_details %}
                         <option value="{{ order_detail.order_detail_id }}">
-                            {{ order_detail.order_relation.cus_name }}<br>
-                            Address: {{ order_detail.order_relation.cus_address }}<br>
-                            Order Date: {{ order_detail.order_relation.order_date }}<br>
+                            {{ order_detail.order_relation.cus_name }} - 
+                            Address: {{ order_detail.order_relation.cus_address }} - 
+                            Order Date: {{ order_detail.order_relation.order_date }} - 
                             Order Detail ID: {{ order_detail.order_detail_id }}
                         </option>
                     {% endfor %}
                 </select>
             </div>
 
-            <!-- Product Condition Dropdown
-            <div class="form-group">
-                <label for="condition">Product Condition:</label>
-                <select id="condition" name="condition" class="form-control" required>
-                    <option value="" disabled selected>Select Product Condition</option>
-                    <option value="Good" {% if return and return.condition == 'Good' %}selected{% endif %}>Good</option>
-                    <option value="Damaged" {% if return and return.condition == 'Damaged' %}selected{% endif %}>Damaged</option>
-                </select>
-            </div> -->
-
             <!-- Refund Method Selection -->
-            <label for="refund_method">Refund Method:</label>
-            <select id="refund_method" name="refund_method" class="form-control">
-                <option value="" disabled selected>Select Refund Method</option>
-                <option value="Original Payment">Original Payment</option>
-                <option value="Store Credit">Store Credit</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-            </select>
-            <br>
+            <div class="form-group">
+                <label for="refund_method"><i class="fas fa-credit-card"></i> Refund Method <span class="text-danger">*</span></label>
+                <select id="refund_method" name="refund_method" class="form-control" required>
+                    <option value="" disabled selected>Select Refund Method</option>
+                    <option value="Original Payment">Original Payment</option>
+                    <option value="Store Credit">Store Credit</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+            </div>
 
-            <button type="submit" class="btn btn-primary">Submit Return Request</button>
-            <br><br>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Return Request</button>
         </form>
 
-        <div class="card mb-4">
-            <div class="card-header">Return Requests</div>
+        <!-- Return Requests Table -->
+        <div class="card mb-4 mt-5">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-list"></i> Return Requests
+            </div>
             <div class="card-body">
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
@@ -83,25 +85,24 @@
                             <tr>
                                 <td>{{ re.return_id }}</td>
                                 <td>{{ re.order_detail.product_name }}</td>
-                                <td> 
-                                    <form action="{{ url_for('inspect_return', return_id=re.return_id) }}" method="POST" onsubmit="return confirm('Bạn có chắc muốn cập nhật tình trạng sản phẩm?')" class="d-flex flex-column align-items-start">
+                                <td>
+                                    <form action="{{ url_for('inspect_return', return_id=re.return_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to update the product condition?')" class="d-flex flex-column align-items-start">
                                         <select name="condition" class="form-control" id="condition-dropdown" onchange="this.form.submit();" {% if re.condition %}disabled{% endif %}>
                                             <option value="" disabled {% if not re.condition %}selected{% endif %}>Select</option>
                                             <option value="Good" {% if re.condition == 'Good' %}selected{% endif %}>Good</option>
                                             <option value="Damaged" {% if re.condition == 'Damaged' %}selected{% endif %}>Damaged</option>
                                         </select>
-                                        <noscript><button type="submit" class="btn btn-primary">Submit</button></noscript>
+                                        <noscript><button type="submit" class="btn btn-primary mt-2">Submit</button></noscript>
                                     </form>
-                                    
                                 </td>
                                 <td>{{ re.return_status }}</td>
                                 <td>{{ re.refund_method }}</td>
-                                <td>                                    
+                                <td>
                                     <form action="{{ url_for('delete_return', return_id=re.return_id) }}" method="POST" style="display:inline;">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this return request?')">Delete</button>
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this return request?')"><i class="fas fa-trash"></i> Delete</button>
                                     </form>
-                                    {% if re.return_status=="Processing" %}
-                                        <a href="{{ url_for('confirm_payment', return_id=re.return_id) }}" class="btn btn-success btn-sm">Confirm</a>
+                                    {% if re.return_status == "Processing" %}
+                                        <a href="{{ url_for('confirm_payment', return_id=re.return_id) }}" class="btn btn-success btn-sm"><i class="fas fa-check-circle"></i> Confirm</a>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -112,6 +113,4 @@
         </div>
     </div>
 </main>
-
-
 {% endblock %}

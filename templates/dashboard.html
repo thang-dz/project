@@ -1,28 +1,33 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>Inventory Management Dashboard</title>
+    <title>Inventory Management Dashboard</title>
 {% endblock %}
 
 {% block content %}
-
 <main>
-    <div class="container-fluid">
-        <h1 class="mt-4">Business Dashboard</h1>
-        <ol class="breadcrumb mb-4">
-            <li class="breadcrumb-item active">Dashboard</li>
-        </ol>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2.25rem; line-height: 1.4; letter-spacing: -0.5px;">
+                <i class="fas fa-chart-line mr-3" style="font-size: 1.8rem;"></i>  Dashboard
+            </h1>
+            <ol class="breadcrumb mb-0" style="font-size: 1.1rem;">
+                <li class="breadcrumb-item text-muted">Dashboard</li>
+            </ol>
+        </div>
+        
 
         <!-- First row: Sales Revenue Trend and Order Status Distribution Charts -->
         <div class="row">
-            <div class="col-8 mb-4">
-                <div class="card">
-                    <div class="card-header">
+            <div class="col-lg-8 col-md-12 mb-4">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <i class="fas fa-chart-line mr-1"></i> Sales Revenue Trend
                     </div>
                     <div class="card-body">
                         <!-- Add dropdown for month selection -->
-                        <select id="monthFilter" class="form-control mb-3">
+                        <select id="monthFilter" class="form-control mb-3 rounded-pill shadow-sm">
                             <option value="all">All Months</option>
                             <option value="01">January</option>
                             <option value="02">February</option>
@@ -45,14 +50,14 @@
                 </div>
             </div>
 
-            <div class="col-4 mb-4">
-                <div class="card">
-                    <div class="card-header">
+            <div class="col-lg-4 col-md-12 mb-4">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
                         <i class="fas fa-chart-pie mr-1"></i> Order Status Distribution
                     </div>
                     <div class="card-body">
                         <!-- Add dropdown for day/week filter -->
-                        <select id="dateFilter" class="form-control mb-3">
+                        <select id="dateFilter" class="form-control mb-3 rounded-pill shadow-sm">
                             <option value="day">By Day</option>
                             <option value="week">By Week</option>
                         </select>
@@ -64,9 +69,9 @@
                 </div>
             </div>
 
-            <div class="col-4 mb-4">
-                <div class="card">
-                    <div class="card-header">
+            <div class="col-lg-4 col-md-12 mb-4">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                         <i class="fas fa-cogs mr-1"></i> Top 3 Best-Selling Products
                     </div>
                     <div class="card-body">
@@ -132,20 +137,20 @@ function updateChartByMonth(month) {
                     data: sales,
                     backgroundColor: 'rgb(246,213,92)',  
                     borderColor: 'rgb(246,213,92)',
-                    borderWidth: 0.5,
+                    borderWidth: 1,
                     barPercentage: 0.5,  // Control bar width
                     categoryPercentage: 0.5
                 },
                 {
-                    label: 'Line from 0 to Sales Value',  // Line chart dataset
+                    label: 'Trend Line',  // Line chart dataset
                     data: sales,
                     type: 'line',  // Define this as a line chart
-                    borderColor: 'rgb(75, 192, 192)',  // Line color
-                    borderWidth: 1,  // Thicker line for visibility
+                    borderColor: 'rgba(255, 99, 132, 1)',  // Line color
+                    borderWidth: 2,  // Thicker line for visibility
                     fill: false,  // Don't fill under the line
-                    tension: 0.2,  // Smooth line
-                    pointRadius: 3,  // Points on the line
-                    pointBackgroundColor: 'rgb(75, 192, 192)',  // Point color
+                    tension: 0.4,  // Smooth line
+                    pointRadius: 5,  // Points on the line
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',  // Point color
                     pointStyle: 'circle',  // Ensure the points are circles and not other shapes
                     pointHitRadius: 5  // Increase hit radius for easier selection
                 }
@@ -189,13 +194,14 @@ document.getElementById('monthFilter').addEventListener('change', function() {
     updateChartByMonth(selectedMonth);  // Update chart when a month is selected
 });
 
+// Order Status Distribution Chart (Pie Chart)
 let orderStatusData = [];
 
 function fetchOrderStatusData(dateFilter) {
     fetch(`/order_status_data?date_filter=${dateFilter}`)
         .then(response => {
             if (!response.ok) {
-                throw new Error('Lỗi khi truy vấn dữ liệu trạng thái đơn hàng');
+                throw new Error('Error fetching order status data');
             }
             return response.json();
         })
@@ -205,19 +211,19 @@ function fetchOrderStatusData(dateFilter) {
             const noDataMessage = document.getElementById('noDataMessageOrderStatus');
 
             if (orderStatusData.length === 0) {
-                chartElement.style.display = 'none';  // Ẩn biểu đồ khi không có dữ liệu
-                noDataMessage.style.display = 'block';  // Hiển thị thông báo không có dữ liệu
+                chartElement.style.display = 'none';  // Hide chart if no data
+                noDataMessage.style.display = 'block';  // Show "No data" message
             } else {
                 const statusLabels = orderStatusData.map(item => item.status);
                 const statusCounts = orderStatusData.map(item => item.count);
 
-                // Hủy biểu đồ cũ trước khi tạo mới
+                // Destroy existing chart before creating a new one
                 const ctx2 = chartElement.getContext('2d');
                 if (window.orderStatusChartInstance) {
                     window.orderStatusChartInstance.destroy();
                 }
 
-                // Tạo biểu đồ tròn mới
+                // Create new pie chart
                 window.orderStatusChartInstance = new Chart(ctx2, {
                     type: 'pie',
                     data: {
@@ -229,34 +235,32 @@ function fetchOrderStatusData(dateFilter) {
                     }
                 });
 
-                // Hiển thị biểu đồ và ẩn thông báo "Không có dữ liệu"
+                // Show chart and hide "No data" message
                 chartElement.style.display = 'block';
                 noDataMessage.style.display = 'none';
             }
         })
         .catch(error => {
-            console.error('Lỗi khi lấy dữ liệu trạng thái đơn hàng:', error);
-            document.getElementById('noDataMessageOrderStatus').textContent = 'Không thể tải dữ liệu. Vui lòng thử lại sau.';
+            console.error('Error fetching order status data:', error);
+            document.getElementById('noDataMessageOrderStatus').textContent = 'Unable to load data. Please try again later.';
             document.getElementById('noDataMessageOrderStatus').style.display = 'block';
         });
 }
 
-// Lắng nghe sự kiện thay đổi bộ lọc ngày/tuần
+// Event listener for the date filter (day/week)
 document.getElementById('dateFilter').addEventListener('change', function() {
     fetchOrderStatusData(this.value);
 });
 
-// Gọi hàm để lấy dữ liệu mặc định khi trang tải lần đầu
+// Initial fetch of order status data
 fetchOrderStatusData('day');
-
-
 
 // Top 3 Best-Selling Products (Bar Chart)
 var topProducts = {{ top_products | tojson }};  // Top products data from Django context
 
 if (topProducts.length === 0) {
-    document.getElementById('topProductsChart').style.display = 'none';  // Hide the chart
-    document.getElementById('noDataMessageProducts').style.display = 'block';  // Show the "No data" message
+    document.getElementById('topProductsChart').style.display = 'none';  // Hide chart if no data
+    document.getElementById('noDataMessageProducts').style.display = 'block';  // Show "No data" message
 } else {
     var productNames = topProducts.map(function(item) { return item.product_name; });
     var quantities = topProducts.map(function(item) { return item.total_quantity; });
@@ -269,8 +273,8 @@ if (topProducts.length === 0) {
             datasets: [{
                 label: 'Sales Volume',
                 data: quantities,
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                borderColor: 'rgba(255, 159, 64, 1)',
                 borderWidth: 1
             }]
         }
@@ -278,13 +282,27 @@ if (topProducts.length === 0) {
     document.getElementById('topProductsChart').style.display = 'block';  // Ensure the chart is visible
     document.getElementById('noDataMessageProducts').style.display = 'none';  // Hide the "No data" message
 }
-
 </script>
 
 <style>
     .chart {
-        width: 100%;  /* Ensure the chart fills its container */
-        height: 300px; /* Adjust height for better visibility */
+        width: 100%;
+        height: 300px;
+        border-radius: 10px;
+    }
+
+    .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .form-control {
+        font-size: 1rem;
     }
 </style>
 
