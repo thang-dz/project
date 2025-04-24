@@ -1,69 +1,132 @@
 {% extends 'base.html' %}
 
-{% block title %}
-<title>Add Product Batch</title>
-
-
-{% endblock %}
+{% block title %}Add Product Batch{% endblock %}
 
 {% block content %}
-<main class="container-fluid mt-5">
-    <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="text-dark font-weight-bold">Add New Product Batch</h1>
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
-            <li class="breadcrumb-item active">Add Product Batch</li>
-        </ol>
-    </div>
-
-    <!-- Product Batch Form -->
-    <div class="card shadow-lg border-0 mb-4">
-        <div class="card-header bg-primary text-white font-weight-bold">
-            Product Batch Form
+<main>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold">Add New Product Batch</h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item active">Add Product Batch</li>
+            </ol>
         </div>
-        <div class="card-body">
-            <form method="POST">
-                <!-- Select Product -->
-                <div class="form-group mb-3">
-                    <label for="order_detail_id" class="font-weight-semibold text-dark">Select Product <span class="text-danger">*</span></label>
-                    <select class="form-control selectpicker" id="order_detail_id" name="order_detail_id" required data-live-search="true">
-                        <option value="" disabled selected>Select a product</option>
-                        {% for order in order_details %}
-                            <option value="{{ order.order_detail_id }}">{{ order.product_name }} (Order: {{ order.order_relation.order_id }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
 
-                <!-- Batch Number -->
-                <div class="form-group mb-3">
-                    <label for="batch_number" class="font-weight-semibold text-dark">Batch Number <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="batch_number" name="batch_number" required placeholder="Enter Batch Number">
-                </div>
+        <!-- Product Batch Form -->
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                Product Batch Form
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <!-- Select Product -->
+                    <div class="form-group">
+                        <label for="order_detail_id">Select Product <span class="text-danger">*</span></label>
+                        <select class="form-control select2" id="order_detail_id" name="order_detail_id" required>
+                            <option value="" disabled selected>Select a product</option>
+                            {% for order in order_details %}
+                                <option value="{{ order.order_detail_id }}">
+                                    {{ order.product_name }} (Order: {{ order.order_relation.order_id }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                <!-- Category -->
-                <div class="form-group mb-3">
-                    <label for="category" class="font-weight-semibold text-dark">Category <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="category" name="category" required placeholder="Enter Category">
-                </div>
+                    <!-- Batch Number -->
+                    <div class="form-group mb-3">
+                        <label for="batch_number" class="font-weight-semibold text-dark">Batch Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="batch_number" name="batch_number" required placeholder="Enter Batch Number">
+                    </div>
 
-                <!-- Select Materials -->
-                <div class="form-group mb-4">
-                    <label for="material_ids" class="font-weight-semibold text-dark">Select Materials <span class="text-danger">*</span></label>
-                    <select class="form-control selectpicker" id="material_ids" name="material_ids" multiple required data-live-search="true">
-                        {% for item in inventory %}
-                            <option value="{{ item.stockTran_id }}">{{ item.product_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                    <!-- Category -->
+                    <div class="form-group mb-3">
+                        <label for="category" class="font-weight-semibold text-dark">Category <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="category" name="category" required placeholder="Enter Category">
+                    </div>
 
-                <!-- Buttons -->
-                <div class="form-group d-flex justify-content-between">
-                    <button type="submit" class="btn btn-dark px-4 py-2">Add Batch</button>
-                    <a href="/view-product-batches/" class="btn btn-secondary px-4 py-2">Back to Batches</a>
-                </div>
-            </form>
+                    <!-- Select Materials -->
+                    <div class="form-group">
+                        <label for="material_ids">Select Materials <span class="text-danger">*</span></label>
+                        <select class="form-control select2" id="material_ids" name="material_ids" multiple required>
+                            {% for item in inventory %}
+                                <option value="{{ item.stockTran_id }}">{{ item.product_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="form-group d-flex justify-content-between">
+                        <button type="submit" class="btn btn-dark px-4 py-2">Add Batch</button>
+                        <a href="/view-product-batches/" class="btn btn-secondary px-4 py-2">Back to Batches</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </main>
+
+<!-- Thêm CSS và JS của Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<!-- Tùy chỉnh style cho Select2 để phù hợp với Bootstrap 4 -->
+<style>
+    .select2-container .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    
+    .select2-container--default .select2-selection--multiple {
+        border: 1px solid #ced4da;
+    }
+    
+    .select2-container .select2-selection--multiple {
+        min-height: 38px;
+    }
+    
+    .select2-container--default.select2-container--focus .select2-selection--multiple,
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #80bdff;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Khởi tạo Select2 sau khi trang đã tải xong
+    $(function() {
+        try {
+            // Single select
+            $('#order_detail_id').select2({
+                placeholder: "Select a product",
+                width: '100%',
+                allowClear: true
+            });
+            
+            // Multiple select
+            $('#material_ids').select2({
+                placeholder: "Select materials",
+                width: '100%',
+                allowClear: true,
+                closeOnSelect: false
+            });
+            
+            console.log("Select2 initialized successfully");
+        } catch (e) {
+            console.error("Error initializing Select2:", e);
+        }
+    });
+});
+</script>
 {% endblock %}

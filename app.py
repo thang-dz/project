@@ -10,6 +10,7 @@ from wtforms.validators import DataRequired, Email
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from sqlalchemy import func
+import re   
 
 
 app = Flask(__name__)
@@ -317,7 +318,27 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-
+def get_daily_sales_data():
+    """Fetch sales data grouped by day within each month"""
+    daily_sales_data = db.session.query(
+        db.func.strftime('%Y-%m', Order.order_date).label('month_year'),
+        db.func.strftime('%d', Order.order_date).label('day'),
+        db.func.sum(Order.price).label('total_sales')
+    ).filter(
+        Order.status == 'Delivered'  
+    ).group_by(
+        db.func.strftime('%Y-%m', Order.order_date),
+        db.func.strftime('%d', Order.order_date)
+    ).all()
+    
+    return [
+        {
+            'month': row.month_year.split('-')[1],  # Extract month part (MM)
+            'day': row.day,                         # Day part (DD)
+            'total_sales': float(row.total_sales) if row.total_sales else 0.0
+        }
+        for row in daily_sales_data
+    ]
 
 def get_sales_data():
     sales_data = db.session.query(
@@ -360,13 +381,13 @@ def get_top_selling_products():
 @login_required
 def dashboard():
     sales_data = get_sales_data()
-    # order_status_data = get_order_status_data()
+    daily_sales_data = get_daily_sales_data()  # Fixed variable name
     top_products = get_top_selling_products()
 
     return render_template(
         'dashboard.html',
         sales_data=sales_data,
-        # order_status_data=order_status_data,
+        daily_sales_data=daily_sales_data,  # Make sure the template variable name matches
         top_products=top_products
     )
 
@@ -574,20 +595,13 @@ def add_import():
 @login_required
 def update_import_status(import_id):
     import_record = Import.query.get_or_404(import_id)
-
-    # Kiểm tra trạng thái của Import
     if import_record.status == "Supplying":
         import_record.status = "Supplied"
-
-        # Check if the material already exists in the inventory
         existing_inventory_item = Inventory.query.filter_by(product_name=import_record.material_name).first()
-
         if existing_inventory_item:
-            # If the material exists, update the quantity in inventory
-            existing_inventory_item.quantity += import_record.quantity_in_stock
-            flash(f"Material {import_record.material_name} quantity updated in inventory.", "success")
+            existing_inventory_item.quantity += import_record.quantity_in_stock  # Cộng thêm vào số lượng
+            flash(f"Material {import_record.material_name} quantity updated in inventory.", "success")  
         else:
-            # If the material doesn't exist, create a new inventory item
             new_inventory_item = Inventory(
                 product_name=import_record.material_name,
                 quantity=import_record.quantity_in_stock,
@@ -595,64 +609,76 @@ def update_import_status(import_id):
                 import_id=import_record.import_id,
             )
             db.session.add(new_inventory_item)
-            flash(f"New material {import_record.material_name} added to inventory.", "success")
-
+            db.session.commit()
+            flash(f"Material {import_record.material_name} quantity updated in inventory.", "success")  
+            return redirect(url_for('view_import'))            
         try:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
             flash(f"Error updating status or adding to inventory: {str(e)}", "danger")
-
+    elif import_record.status == "Supply":
+        import_record.status = "Supplied"
+        existing_inventory_item = Inventory.query.filter_by(product_name=import_record.material_name).first()
+        if existing_inventory_item:
+            existing_inventory_item.quantity = import_record.quantity_in_stock  # Chỉ cập nhật bằng số lượng hiện tại
+            flash(f"Material {import_record.material_name} quantity updated in inventory.", "success")        
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating status or adding to inventory: {str(e)}", "danger")
     else:
         flash("The import is already marked as 'Supplied'.", "warning")
 
     return redirect(url_for('view_import'))
 
+
 @app.route('/update-import/<int:import_id>', methods=["POST", "GET"])
 @login_required
 def update_import(import_id):
     import_record = Import.query.get_or_404(import_id)
-
     if request.method == "POST":
         # Cập nhật thông tin import
         import_record.material_name = request.form['material_name']
         import_record.material_description = request.form.get('material_description', '')
         import_record.quantity_in_stock = int(request.form.get('quantity_in_stock', 0))
         import_record.reorder_level = int(request.form.get('reorder_level', 30))
-
         import_record.sup_name = request.form['sup_name']
         import_record.sup_contact_info = request.form['sup_contact_info']
         import_record.sup_address = request.form['sup_address']
 
-        # Cập nhật số lượng trong Inventory nếu tồn tại
         inventory_item = Inventory.query.filter_by(import_id=import_record.import_id).first()
         if inventory_item:
-            inventory_item.quantity = import_record.quantity_in_stock  # Cập nhật lại số lượng
-            try:
+            if import_record.status=='Supplied':
+                import_record.status='Supply'
                 db.session.commit()
-                flash("Import updated successfully and inventory updated!", "success")
-                return redirect(url_for('view_import'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Error updating import or inventory: {str(e)}", "danger")
-        else:
-            flash("Inventory item not found for this import.", "danger")
+            else:
+                inventory_item.quantity = import_record.quantity_in_stock  
+                db.session.commit()
+            flash("Material updated successfully !", "success")
+            return redirect(url_for('view_import'))
+        # else:
+        #     flash("Inventory item not found for this import.", "danger")
            
-            new_inventory_item = Inventory(
-                product_name=import_record.material_name,
-                quantity=import_record.quantity_in_stock,
-                transaction_type="Addition",  # Thêm vào kho
-                import_id=import_record.import_id,
-            )
-            db.session.add(new_inventory_item)
-            db.session.commit()
-
+        #     new_inventory_item = Inventory(
+        #         product_name=import_record.material_name,
+        #         quantity=import_record.quantity_in_stock,
+        #         transaction_type="Addition",  # Thêm vào kho
+        #         import_id=import_record.import_id,
+        #     )
+        #     db.session.add(new_inventory_item)
+        #     db.session.commit()
+        return redirect(url_for('view_import'))
     return render_template("update-import.html", import_record=import_record)
 
 @app.route('/delete-import/<int:import_id>', methods=["POST"])
 @login_required
 def delete_import(import_id):
     import_record = Import.query.get_or_404(import_id)
+    inventory_items = Inventory.query.filter_by(import_id=import_id).all()
+    for item in inventory_items:
+        db.session.delete(item) 
 
     try:
         db.session.delete(import_record)
@@ -709,6 +735,15 @@ def add_order():
         cus_name = request.form["cus_name"]
         cus_contact = request.form.get("cus_contact", "")
         cus_address = request.form.get("cus_address", "")
+
+        if re.search(r'\d', cus_name):
+            flash("Customer Name cannot contain numbers.", "danger")
+            return redirect(url_for('add_order'))
+
+        # Validate customer contact (required)
+        if not cus_contact:
+            flash("Customer contact is required.", "danger")
+            return redirect(url_for('add_order'))
         
         # Handle price validation
         price = request.form.get("price")
@@ -1215,10 +1250,9 @@ def create_return():
         order.status = 'Processing'   
         if order.shipping_details:  
             shipment_time = order.shipping_details[0].shipment_time  
-            return_window = timedelta(days=7)  
+            return_window = timedelta(seconds=10)  
             if shipment_time + return_window < datetime.now():
-                flash(f"Return period has expired for this item.", "danger")
-                db.session.commit()
+                flash(f"Return period has expired for this item.", "danger")                
                 return redirect(url_for('create_return'))
         else:
             flash("No shipping information found. Cannot process return request.", "danger")

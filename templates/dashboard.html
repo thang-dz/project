@@ -26,22 +26,34 @@
                         <i class="fas fa-chart-line mr-1"></i> Sales Revenue Trend
                     </div>
                     <div class="card-body">
-                        <!-- Add dropdown for month selection -->
-                        <select id="monthFilter" class="form-control mb-3 rounded-pill shadow-sm">
-                            <option value="all">All Months</option>
-                            <option value="01">January</option>
-                            <option value="02">February</option>
-                            <option value="03">March</option>
-                            <option value="04">April</option>
-                            <option value="05">May</option>
-                            <option value="06">June</option>
-                            <option value="07">July</option>
-                            <option value="08">August</option>
-                            <option value="09">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                        </select>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <!-- Month selection dropdown -->
+                                <select id="monthFilter" class="form-control rounded-pill shadow-sm">
+                                    <option value="all">All Months</option>
+                                    <option value="01">January</option>
+                                    <option value="02">February</option>
+                                    <option value="03">March</option>
+                                    <option value="04">April</option>
+                                    <option value="05">May</option>
+                                    <option value="06">June</option>
+                                    <option value="07">July</option>
+                                    <option value="08">August</option>
+                                    <option value="09">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Toggle for daily view (initially hidden) -->
+                                <div class="custom-control custom-switch mt-2" id="dailyViewContainer">
+                                    <input type="checkbox" class="custom-control-input" id="dailyViewToggle">
+                                    <label class="custom-control-label" for="dailyViewToggle">Show Daily View</label>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <canvas id="salesChart" class="chart"></canvas>
                         <div id="noDataMessage" style="display:none; text-align:center; font-size:16px; color:#888;">
                             Not enough data to display sales trends.
@@ -96,20 +108,59 @@ var allMonths = [
 ];
 
 var salesData = {{ sales_data | tojson }};  // Sales data from Django context
+var dailySalesData = {{ daily_sales_data | tojson }}; // Daily sales data from Django context
+
+// Function to get days in a month
+function getDaysInMonth(month, year = new Date().getFullYear()) {
+    return new Date(year, parseInt(month), 0).getDate();
+}
+
+// Function to generate array of days for a month
+function generateDaysArray(month) {
+    var daysInMonth = getDaysInMonth(parseInt(month));
+    var daysArray = [];
+    for (var i = 1; i <= daysInMonth; i++) {
+        daysArray.push(i < 10 ? '0' + i : '' + i);
+    }
+    return daysArray;
+}
 
 // Function to filter and update the chart based on selected month
 function updateChartByMonth(month) {
-    var filteredSalesData = (month === "all") ? salesData : salesData.filter(function(item) {
-        return item.month === month;
-    });
-
-    // If there is no data for the selected month, show "No data" message
-    if (filteredSalesData.length === 0) {
-        document.getElementById('salesChart').style.display = 'none';  // Hide the chart
-        document.getElementById('noDataMessage').style.display = 'block';  // Show the "No data" message
+    // If "all" is selected, show monthly data for the entire year
+    if (month === "all") {
+        showMonthlyChart(salesData);
+        document.getElementById('dailyViewToggle').style.display = 'none';
     } else {
-        document.getElementById('salesChart').style.display = 'block';  // Show the chart
-        document.getElementById('noDataMessage').style.display = 'none';  // Hide the "No data" message
+        // If specific month is selected, show that month's data and enable daily view toggle
+        var filteredSalesData = salesData.filter(function(item) {
+            return item.month === month;
+        });
+        
+        // Show the toggle button when a specific month is selected
+        document.getElementById('dailyViewToggle').style.display = 'block';
+        
+        // Check if we should show daily or monthly view
+        var isDailyView = document.getElementById('dailyViewToggle').checked;
+        
+        if (isDailyView) {
+            showDailyChart(month);
+        } else {
+            showMonthlyChart(filteredSalesData);
+        }
+    }
+}
+
+// Function to show monthly data chart
+function showMonthlyChart(filteredSalesData) {
+    // If there is no data, show "No data" message
+    if (filteredSalesData.length === 0) {
+        document.getElementById('salesChart').style.display = 'none';
+        document.getElementById('noDataMessage').style.display = 'block';
+        return;
+    } else {
+        document.getElementById('salesChart').style.display = 'block';
+        document.getElementById('noDataMessage').style.display = 'none';
     }
 
     // Prepare sales data for chart rendering
@@ -117,20 +168,20 @@ function updateChartByMonth(month) {
         var monthData = filteredSalesData.find(function(item) { 
             return item.month === monthLabel; 
         });
-        return monthData ? monthData.total_sales : 0;  // Default to 0 if no data exists for that month
+        return monthData ? monthData.total_sales : 0;
     });
 
     // Destroy existing chart if present before creating a new one
     if (window.salesChartInstance) {
-        window.salesChartInstance.destroy();  // Destroy the existing chart instance
+        window.salesChartInstance.destroy();
     }
 
     // Create the bar chart and the line chart on the same axis
     var ctx = document.getElementById('salesChart').getContext('2d');
     window.salesChartInstance = new Chart(ctx, {
-        type: 'bar',  // Bar chart for sales revenue
+        type: 'bar',
         data: {
-            labels: allMonths,  // Months as labels
+            labels: allMonths,
             datasets: [
                 {
                     label: 'Sales Revenue (Per Month)',
@@ -138,62 +189,179 @@ function updateChartByMonth(month) {
                     backgroundColor: 'rgb(246,213,92)',  
                     borderColor: 'rgb(246,213,92)',
                     borderWidth: 1,
-                    barPercentage: 0.5,  // Control bar width
+                    barPercentage: 0.5,
                     categoryPercentage: 0.5
                 },
                 {
-                    label: 'Trend Line',  // Line chart dataset
+                    label: 'Trend Line',
                     data: sales,
-                    type: 'line',  // Define this as a line chart
-                    borderColor: 'rgba(255, 99, 132, 1)',  // Line color
-                    borderWidth: 2,  // Thicker line for visibility
-                    fill: false,  // Don't fill under the line
-                    tension: 0.4,  // Smooth line
-                    pointRadius: 5,  // Points on the line
-                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',  // Point color
-                    pointStyle: 'circle',  // Ensure the points are circles and not other shapes
-                    pointHitRadius: 5  // Increase hit radius for easier selection
+                    type: 'line',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                    pointStyle: 'circle',
+                    pointHitRadius: 5
                 }
             ]
         },
         options: {
-            responsive: true,  // Chart adjusts to the container size
+            responsive: true,
             scales: {
                 y: {
                     beginAtZero: true,
                     grid: { borderColor: 'rgba(0, 0, 0, 0.1)', lineWidth: 1 },
                     ticks: {
-                        callback: function(value) { return (value / 1000000).toLocaleString() + ' M VND'; }  // Convert to M VND (million)
+                        callback: function(value) { return (value / 1000000).toLocaleString() + ' M VND'; }
                     }
                 },
                 x: {
                     grid: { display: false },
-                    scaleLabel: {
+                    title: {
                         display: true,
-                        labelString: 'Month'  // Label for the X-axis as "Month"
+                        text: 'Month'
                     }
                 }
             },
             plugins: {
                 legend: {
                     labels: { font: { family: 'Arial', size: 14 } }
+                },
+                title: {
+                    display: true,
+                    text: 'Monthly Sales Revenue',
+                    font: { size: 16 }
                 }
             }
         }
     });
 }
 
+// Function to show daily data for a specific month
+function showDailyChart(month) {
+    // Filter daily sales data for the selected month
+    var filteredDailySales = dailySalesData.filter(function(item) {
+        return item.month === month;
+    });
+
+    // If there is no daily data, show "No data" message
+    if (filteredDailySales.length === 0) {
+        document.getElementById('salesChart').style.display = 'none';
+        document.getElementById('noDataMessage').style.display = 'block';
+        return;
+    } else {
+        document.getElementById('salesChart').style.display = 'block';
+        document.getElementById('noDataMessage').style.display = 'none';
+    }
+
+    // Get all possible days in the selected month
+    var allDays = generateDaysArray(month);
+    
+    // Prepare daily sales data for chart rendering
+    var dailySales = allDays.map(function(day) {
+        var dayData = filteredDailySales.find(function(item) {
+            return item.day === day;
+        });
+        return dayData ? dayData.total_sales : 0;
+    });
+
+    // Destroy existing chart if present before creating a new one
+    if (window.salesChartInstance) {
+        window.salesChartInstance.destroy();
+    }
+
+    // Create the bar chart and the line chart for daily data
+    var ctx = document.getElementById('salesChart').getContext('2d');
+    window.salesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: allDays,
+            datasets: [
+                {
+                    label: 'Daily Sales Revenue',
+                    data: dailySales,
+                    backgroundColor: 'rgb(102,187,106)',  // Different color for daily view
+                    borderColor: 'rgb(102,187,106)',
+                    borderWidth: 1,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.8
+                },
+                {
+                    label: 'Daily Trend',
+                    data: dailySales,
+                    type: 'line',
+                    borderColor: 'rgba(33, 150, 243, 1)',  // Different color for daily trend
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 3,  // Smaller points due to potentially many days
+                    pointBackgroundColor: 'rgba(33, 150, 243, 1)',
+                    pointStyle: 'circle',
+                    pointHitRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { borderColor: 'rgba(0, 0, 0, 0.1)', lineWidth: 1 },
+                    ticks: {
+                        callback: function(value) { return (value / 1000000).toLocaleString() + ' M VND'; }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Day'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { font: { family: 'Arial', size: 14 } }
+                },
+                title: {
+                    display: true,
+                    text: 'Daily Sales Revenue for ' + getMonthName(month),
+                    font: { size: 16 }
+                }
+            }
+        }
+    });
+}
+
+// Helper function to get month name from month number
+function getMonthName(month) {
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"];
+    return monthNames[parseInt(month) - 1];
+}
+
 // Initial chart load (for "all" months)
 document.addEventListener("DOMContentLoaded", function() {
+    // Hide daily view toggle initially (since "all" is selected by default)
+    document.getElementById('dailyViewToggle').style.display = 'none';
     updateChartByMonth("all");
+    
+    // Event listener for the month filter
+    document.getElementById('monthFilter').addEventListener('change', function() {
+        var selectedMonth = this.value;
+        updateChartByMonth(selectedMonth);
+    });
+    
+    // Event listener for the daily view toggle
+    document.getElementById('dailyViewToggle').addEventListener('change', function() {
+        var selectedMonth = document.getElementById('monthFilter').value;
+        if (selectedMonth !== "all") {
+            updateChartByMonth(selectedMonth);
+        }
+    });
 });
-
-// Event listener for the month filter
-document.getElementById('monthFilter').addEventListener('change', function() {
-    var selectedMonth = this.value;
-    updateChartByMonth(selectedMonth);  // Update chart when a month is selected
-});
-
 // Order Status Distribution Chart (Pie Chart)
 let orderStatusData = [];
 

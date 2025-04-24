@@ -160,6 +160,7 @@ $(document).ready(function() {
 
       });
     }
+    
    /*  function ajaxCallLocation() {
       $.ajax({
         data: {

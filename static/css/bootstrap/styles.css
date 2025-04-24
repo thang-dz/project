@@ -238,9 +238,6 @@ svg {
   vertical-align: middle;
 }
 
-table {
-  border-collapse: collapse;
-}
 
 caption {
   padding-top: 0.75rem;
@@ -1710,6 +1707,11 @@ pre code {
     margin-left: 91.6666666667%;
   }
 }
+
+table {
+  border-collapse: collapse;
+}
+
 .table {
   width: 100%;
   margin-bottom: 1rem;
@@ -10304,7 +10306,7 @@ body {
   top: 20px;  /* Khoảng cách từ đầu trang */
   left: 50%;
   transform: translateX(-50%);
-  z-index: 9999;  /* Đảm bảo alert luôn ở trên cùng */
+  z-index: 1050; /* Đảm bảo alert luôn ở trên cùng */
   width: 80%;  /* Điều chỉnh độ rộng của alert */
   max-width: 600px;  /* Giới hạn độ rộng tối đa */
   padding: 15px;
