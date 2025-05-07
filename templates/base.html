@@ -10,15 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Core Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+   
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
     
     <!-- Other CSS in correct order -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet" crossorigin="anonymous" />
-    
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap/styles.css') }}">
 
     <style>
@@ -89,7 +88,7 @@
             margin-top: 10px;
         }
 
-        /* Thiết kế đáp ứng */
+        
         @media (max-width: 768px) {
             .navbar {
                 background-color: #28a745;
@@ -101,25 +100,37 @@
         }
     </style>
 </head>
+
 <body class="sb-nav-fixed">
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-        <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button>
+        <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#">
+            <i class="fas fa-bars"></i>
+        </button>
         <a class="navbar-brand" href="/">Trọng Phán</a>
+        <!-- Dropdown Menu (Biểu tượng người dùng) -->
         <div class="d-flex align-items-center ml-3 ml-lg-auto">
             <div class="dropdown">
-                <i class="fas fa-user dropdown-toggle" id="userDropdown" data-toggle="dropdown" aria-haspopup="true" style="color:white" aria-expanded="false"></i>
+                <span class="dropdown-toggle" id="userDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="cursor: pointer;">
+                    <i class="fas fa-user" style="color:white"></i>
+                </span>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown" style="margin-right: 10px;">
                     {% if current_user.is_authenticated %}
-                    <a class="dropdown-item" href="{{ url_for('index') }}">User</a>
-                    <a class="dropdown-item" href="{{ url_for('logout') }}">Log Out</a>
+                        <!-- Nếu người dùng đã đăng nhập -->
+                        <a class="dropdown-item" href="{{ url_for('index') }}">Profile</a>
+                        <a class="dropdown-item" href="{{ url_for('logout') }}">Log Out</a>
                     {% else %}
-                    <a class="dropdown-item" href="{{ url_for('login') }}">Login</a>
-                    <a class="dropdown-item" href="{{ url_for('register') }}">Register</a>
+                        <!-- Nếu người dùng chưa đăng nhập -->
+                        <a class="dropdown-item" href="{{ url_for('login') }}" >Login</a>
+                        <a class="dropdown-item" href="{{ url_for('register') }}">Register</a>
                     {% endif %}
                 </div>
-            </div>
+            </div>    
         </div>
+
+
+
     </nav>
+    
 
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">
@@ -181,61 +192,20 @@
         </div>
     </div>
 
-    <!-- JavaScript in correct order -->
-    <!-- 1. jQuery first -->
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
-    
-    <!-- 2. Popper.js (needed for certain Bootstrap components) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     
-    <!-- 3. Bootstrap JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    
-    <!-- 4. Font Awesome -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/js/all.min.js" crossorigin="anonymous"></script>
-    
-    <!-- 5. Bootstrap-select after Bootstrap -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
-    
-    <!-- 6. DataTables -->
     <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
-    
-    <!-- 7. Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- 8. Custom scripts -->
     <script src="{{ url_for('static', filename='js/bootstrap/scripts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/datatables-demo.js') }}"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 
-    <script>
-        $(document).ready(function () {
-            // // Initialize bootstrap-select
-            // $('.selectpicker').selectpicker();
-            
-            // Auto-hide alerts
-            setTimeout(function() {
-                $(".alert").fadeOut("slow");
-            }, 3000);
-            
-            // DataTable initialization if needed
-            // if (!$.fn.dataTable.isDataTable('#dataTable')) {
-            //     $('#dataTable').DataTable({
-            //         "pageLength": 10,
-            //         "lengthMenu": [10, 25, 50, 100],
-            //         "language": {
-            //             "lengthMenu": "Hiển thị _MENU_ mục",
-            //             "info": "Hiển thị từ _START_ đến _END_ trong tổng số _TOTAL_ mục",
-            //             "paginate": {
-            //                 "previous": "Trước",
-            //                 "next": "Tiếp theo"
-            //             }
-            //         }
-            //     });
-            // }
-        });
-    </script>
+    <!-- Optional select2 plugin -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
@@ -244,4 +214,5 @@
         });
     </script>
 </body>
+
 </html>

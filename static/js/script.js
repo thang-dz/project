@@ -11,6 +11,7 @@ $(document).ready(function() {
         return false;
     });
 
+
     $("#submitLocation").on("click", function(e){
       e.preventDefault();
       $.ajax({
@@ -180,3 +181,4 @@ $(document).ready(function() {
 
 
 });
+
