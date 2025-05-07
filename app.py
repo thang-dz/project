@@ -1114,7 +1114,7 @@ def create_shipping_order(order_id):
 
         try:
             db.session.add(shipping)
-            db.session.commit()  # Commit only once after all changes
+            db.session.commit()  
             flash(f"Shipping order created for Order #{order_id} with tracking code {tracking_code}.", 'success')
             return redirect(url_for('shipping_list', shipping_id=shipping.shipping_id))
         except Exception as e:
@@ -1215,122 +1215,122 @@ def delete_shipping_queue(shipping_queue_id):
     return redirect(url_for('shipping_queue_list'))
 
 
-# @app.route('/create-return/', methods=['GET', 'POST'])
-# def create_return():    
-#     returns = ReturnRequest.query.all()  
-#     if request.method == 'POST':
-#         order_detail_id = request.form.get('order_detail_id')
-#         condition = request.form.get('condition')
-#         refund_method = request.form.get('refund_method')    
-#         if not refund_method:
-#             flash("Please select a refund method to proceed.", "danger")
-#             return redirect(url_for('create_return'))
-#         if not order_detail_id:
-#             flash("Order Detail ID is required.", "danger")
-#             return redirect(url_for('create_return'))
-#         order_detail = OrderDetail.query.get(order_detail_id)
-#         if not order_detail:
-#             flash("Invalid order detail ID.", "danger")
-#             return redirect(url_for('create_return'))    
-#         order = order_detail.order_relation  
-#         if order.status != 'Delivered': 
-#             flash("Return request can only be created for delivered orders.", "danger")
-#             return redirect(url_for('view_returns'))  
-#         if order_detail.odstarus != "Processing":  
-#             flash("Return request can only be created for processing order details.", "danger")
-#             return redirect(url_for('create_return')) 
-#         new_return = ReturnRequest(
-#             order_detail_id=order_detail_id,
-#             condition=condition,
-#             return_status='Pending',
-#             refund_method=refund_method
-#         )
-#         db.session.add(new_return)
-#         order_detail.odstarus = "Done"
-#         order.status = 'Processing'   
-#         if order.shipping_details:  
-#             shipment_time = order.shipping_details[0].shipment_time  
-#             return_window = timedelta(seconds=10)  
-#             if shipment_time + return_window < datetime.now():
-#                 flash(f"Return period has expired for this item.", "danger")                
-#                 return redirect(url_for('create_return'))
-#         else:
-#             flash("No shipping information found. Cannot process return request.", "danger")
-#             return redirect(url_for('create_return'))   
-#         db.session.commit()       
-#         flash("Return request created successfully.", "success")
-#         return redirect(url_for('create_return'))
-#     order_details = OrderDetail.query.join(Order).filter(Order.status == 'Delivered', OrderDetail.odstarus == "Processing").all()
-#     return render_template('return_form.html', order_details=order_details, returns=returns)
+@app.route('/create-return/', methods=['GET', 'POST'])
+def create_return():    
+    returns = ReturnRequest.query.all()  
+    if request.method == 'POST':
+        order_detail_id = request.form.get('order_detail_id')
+        condition = request.form.get('condition')
+        refund_method = request.form.get('refund_method')    
+        if not refund_method:
+            flash("Please select a refund method to proceed.", "danger")
+            return redirect(url_for('create_return'))
+        if not order_detail_id:
+            flash("Order Detail ID is required.", "danger")
+            return redirect(url_for('create_return'))
+        order_detail = OrderDetail.query.get(order_detail_id)
+        if not order_detail:
+            flash("Invalid order detail ID.", "danger")
+            return redirect(url_for('create_return'))    
+        order = order_detail.order_relation  
+        if order.status != 'Delivered': 
+            flash("Return request can only be created for delivered orders.", "danger")
+            return redirect(url_for('view_returns'))  
+        if order_detail.odstarus != "Processing":  
+            flash("Return request can only be created for processing order details.", "danger")
+            return redirect(url_for('create_return')) 
+        new_return = ReturnRequest(
+            order_detail_id=order_detail_id,
+            condition=condition,
+            return_status='Pending',
+            refund_method=refund_method
+        )
+        db.session.add(new_return)
+        order_detail.odstarus = "Done"
+        order.status = 'Processing'   
+        if order.shipping_details:  
+            shipment_time = order.shipping_details[0].shipment_time  
+            return_window = timedelta(seconds=10)  
+            if shipment_time + return_window < datetime.now():
+                flash(f"Return period has expired for this item.", "danger")                
+                return redirect(url_for('create_return'))
+        else:
+            flash("No shipping information found. Cannot process return request.", "danger")
+            return redirect(url_for('create_return'))   
+        db.session.commit()       
+        flash("Return request created successfully.", "success")
+        return redirect(url_for('create_return'))
+    order_details = OrderDetail.query.join(Order).filter(Order.status == 'Delivered', OrderDetail.odstarus == "Processing").all()
+    return render_template('return_form.html', order_details=order_details, returns=returns)
 
-# @app.route('/delete-return/<int:return_id>', methods=['POST'])
-# def delete_return(return_id):
-#     print(f"Attempting to delete return with ID: {return_id}")
-#     return_request = ReturnRequest.query.get_or_404(return_id)
-#     order_detail = return_request.order_detail
-#     order = order_detail.order_relation if order_detail else None
-#     try:
-#         if order_detail and order:
-#             order_detail.odstarus = "Processing"  
-#             order.status = 'Delivered'
-#         db.session.delete(return_request)
-#         db.session.commit()
-#         flash("Return request deleted successfully.", "success")
-#     except Exception as e:
-#         db.session.rollback() 
-#         flash(f"Error deleting return request: {str(e)}", "danger")
-#     return redirect(url_for('create_return'))
+@app.route('/delete-return/<int:return_id>', methods=['POST'])
+def delete_return(return_id):
+    print(f"Attempting to delete return with ID: {return_id}")
+    return_request = ReturnRequest.query.get_or_404(return_id)
+    order_detail = return_request.order_detail
+    order = order_detail.order_relation if order_detail else None
+    try:
+        if order_detail and order:
+            order_detail.odstarus = "Processing"  
+            order.status = 'Delivered'
+        db.session.delete(return_request)
+        db.session.commit()
+        flash("Return request deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback() 
+        flash(f"Error deleting return request: {str(e)}", "danger")
+    return redirect(url_for('create_return'))
 
-# @app.route('/inspect-return/<int:return_id>', methods=['GET', 'POST'])
-# def inspect_return(return_id):
-#     return_request = ReturnRequest.query.get_or_404(return_id)    
-#     if request.method == 'POST':
-#         # Lấy điều kiện từ form
-#         condition = request.form.get('condition')        
-#         if condition not in ['Good', 'Damaged']:
-#             flash("Invalid product condition.", "danger")
-#             return redirect(url_for('view_returns'))
-#         return_request.return_status = "Processing"
-#         return_request.condition = condition
-#         db.session.commit() 
-#         flash("Return inspected successfully.", "success")
-#         return redirect(url_for('create_return'))  
-#     return render_template('return_form.html', return_request=return_request)
+@app.route('/inspect-return/<int:return_id>', methods=['GET', 'POST'])
+def inspect_return(return_id):
+    return_request = ReturnRequest.query.get_or_404(return_id)    
+    if request.method == 'POST':
+        # Lấy điều kiện từ form
+        condition = request.form.get('condition')        
+        if condition not in ['Good', 'Damaged']:
+            flash("Invalid product condition.", "danger")
+            return redirect(url_for('view_returns'))
+        return_request.return_status = "Processing"
+        return_request.condition = condition
+        db.session.commit() 
+        flash("Return inspected successfully.", "success")
+        return redirect(url_for('create_return'))  
+    return render_template('return_form.html', return_request=return_request)
 
-# @app.route('/confirm-payment/<int:return_id>', methods=['GET', 'POST'])
-# def confirm_payment(return_id):
-#     return_request = ReturnRequest.query.get_or_404(return_id)
-#     order_detail = return_request.order_detail
-#     order = order_detail.order_relation if order_detail else None  
+@app.route('/confirm-payment/<int:return_id>', methods=['GET', 'POST'])
+def confirm_payment(return_id):
+    return_request = ReturnRequest.query.get_or_404(return_id)
+    order_detail = return_request.order_detail
+    order = order_detail.order_relation if order_detail else None  
     
-#     order.status='Cancelled'
-#     if request.method == 'POST':        
-#         if order:
-#             order.price = 0
+    order.status='Cancelled'
+    if request.method == 'POST':        
+        if order:
+            order.price = 0
         
-#         if return_request.condition == 'Good':
-#             return_request.return_status = 'Completed'
-#             if order_detail:
-#                 new_inventory = InventoryProduct(
-#                     product_name=order_detail.product_name,
-#                     quantity=order_detail.quantity,
-#                     date=vietnam_now()
-#                 )
-#                 db.session.add(new_inventory)
+        if return_request.condition == 'Good':
+            return_request.return_status = 'Completed'
+            if order_detail:
+                new_inventory = InventoryProduct(
+                    product_name=order_detail.product_name,
+                    quantity=order_detail.quantity,
+                    date=vietnam_now()
+                )
+                db.session.add(new_inventory)
                 
-#             db.session.commit()
-#             flash("Payment confirmed. Product added to inventory.", "success")
-#             return redirect(url_for('create_return'))
+            db.session.commit()
+            flash("Payment confirmed. Product added to inventory.", "success")
+            return redirect(url_for('create_return'))
 
-#         # 3. Handle "Defective" condition → mark complete only
-#         if return_request.condition == 'Damaged':
-#             return_request.return_status = 'Completed'
+        # 3. Handle "Defective" condition → mark complete only
+        if return_request.condition == 'Damaged':
+            return_request.return_status = 'Completed'
                           
-#             db.session.commit()
-#             flash("Defective product marked as completed.", "warning")
-#             return redirect(url_for('create_return'))
+            db.session.commit()
+            flash("Defective product marked as completed.", "warning")
+            return redirect(url_for('create_return'))
 
-#     return render_template('confirm_payment.html', return_request=return_request)
+    return render_template('confirm_payment.html', return_request=return_request)
 
 
 
