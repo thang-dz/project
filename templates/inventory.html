@@ -96,7 +96,7 @@
                             </td>
                             <td>
                                 {% if item.import_data and item.quantity < item.import_data.reorder_level %}
-                                    <a href="{{ url_for('create_purchase_request', import_id=item.stockTran_id) }}" class="btn btn-primary btn-sm hover-shadow">
+                                    <a href="{{ url_for('create_purchase_request', import_id=item.stockTran_id) }}" class="btn btn-ac btn-sm hover-shadow">
                                         <i class="fas fa-cart-plus"></i> Create Purchase
                                     </a>
                                 {% else %}

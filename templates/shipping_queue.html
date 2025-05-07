@@ -31,7 +31,7 @@
         </div>
 
         <!-- Shipping List Button -->
-        <a href="/shipping-list/" class="btn btn-success mb-3">
+        <a href="/shipping-list/" class="btn btn-add mb-3">
             <i class="fas fa-list"></i> Shipping List
         </a>
 
@@ -61,10 +61,11 @@
                                         <td>{{ item.quantity }}</td>
                                         <td>{{ item.status }}</td>
                                         <td>
-                                            <!-- Create Ship Button -->
-                                            <a href="{{ url_for('create_shipping_order', order_id=item.order_id) }}" class="btn btn-primary btn-sm hover-shadow">
+                                            {% if item.status=="Processing" %}
+                                            <a href="{{ url_for('create_shipping_order', order_id=item.order_id) }}" class="btn btn-ac btn-sm hover-shadow">
                                                 <i class="fas fa-truck-loading"></i> Create Ship
                                             </a>
+                                            {% endif %}
                                             
                                             <!-- Delete Button -->
                                             <form action="{{ url_for('delete_shipping_queue', shipping_queue_id=item.shipping_queue_id) }}" method="POST" style="display:inline;">
@@ -86,10 +87,6 @@
     </div>
 </main>
 
-<script>
-    $(document).ready(function() {
-        $('#dataTable').DataTable();
-    });
-</script>
+
 
 {% endblock %}

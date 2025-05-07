@@ -10319,3 +10319,79 @@ body {
   color: #721c24;
   border-color: #f5c6cb;
 }
+.btn-add {
+  color: #fff;
+  background-color: #30A0E0;
+  border-color: #30A0E0;
+}
+
+.btn-add:hover {
+  color: #fff;
+  background-color: #1a8bb7;  /* Màu nền khi hover */
+  border-color: #1a8bb7;      /* Màu viền khi hover */
+}
+
+.btn-add:focus, .btn-add.focus {
+  color: #fff;
+  background-color: #1a8bb7;
+  border-color: #1a8bb7;
+  box-shadow: 0 0 0 0.2rem rgba(48, 160, 224, 0.5);  /* Ánh sáng khi focus */
+}
+
+.btn-add.disabled, .btn-add:disabled {
+  color: #fff;
+  background-color: #30A0E0;
+  border-color: #30A0E0;
+}
+
+.btn-add:not(:disabled):not(.disabled):active, 
+.btn-add:not(:disabled):not(.disabled).active,
+.show > .btn-add.dropdown-toggle {
+  color: #fff;
+  background-color: #1a8bb7;
+  border-color: #1a8bb7;
+}
+
+.btn-add:not(:disabled):not(.disabled):active:focus, 
+.btn-add:not(:disabled):not(.disabled).active:focus, 
+.show > .btn-add.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(48, 160, 224, 0.5);
+}
+.btn-ac {
+  color: #fff;  /* Màu chữ trắng */
+  background-color: #1F9CE4;  /* Màu nền là #1F9CE4 */
+  border-color: #1F9CE4;  /* Màu viền là #1F9CE4 */
+}
+
+.btn-ac:hover {
+  color: #fff;  /* Màu chữ trắng khi hover */
+  background-color: #1690c1;  /* Màu nền khi hover (màu sáng hơn #1F9CE4) */
+  border-color: #1690c1;      /* Màu viền khi hover */
+}
+
+.btn-ac:focus, .btn-ac.focus {
+  color: #fff;  /* Màu chữ trắng khi focus */
+  background-color: #1690c1;
+  border-color: #1690c1;
+  box-shadow: 0 0 0 0.2rem rgba(31, 156, 228, 0.5);  /* Ánh sáng khi focus */
+}
+
+.btn-ac.disabled, .btn-ac:disabled {
+  color: #fff;  /* Màu chữ trắng khi disabled */
+  background-color: #1F9CE4;
+  border-color: #1F9CE4;
+}
+
+.btn-ac:not(:disabled):not(.disabled):active, 
+.btn-ac:not(:disabled):not(.disabled).active,
+.show > .btn-ac.dropdown-toggle {
+  color: #fff;  /* Màu chữ trắng khi active */
+  background-color: #1690c1;
+  border-color: #1690c1;
+}
+
+.btn-ac:not(:disabled):not(.disabled):active:focus, 
+.btn-ac:not(:disabled):not(.disabled).active:focus, 
+.show > .btn-ac.dropdown-toggle:focus {
+  box-shadow: 0 0 0 0.2rem rgba(31, 156, 228, 0.5);
+}

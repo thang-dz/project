@@ -70,7 +70,7 @@
                                                 </button>
                                             </form>
                                             {% if shipping.shipping_status =="Processing" %}
-                                                <a href="{{ url_for('confirm_shipping_payment', shipping_id=shipping.shipping_id) }}" class="btn btn-primary btn-sm hover-shadow">
+                                                <a href="{{ url_for('confirm_shipping_payment', shipping_id=shipping.shipping_id) }}" class="btn btn-ac btn-sm hover-shadow" style="margin-top: 5px; ">
                                                     <i class="fas fa-check-circle"></i> Confirm Payment
                                                 </a>
                                             {% endif %}
@@ -92,10 +92,6 @@
     </div>
 </main>
 
-<script>
-    $(document).ready(function() {
-        $('#dataTable').DataTable();
-    });
-</script>
+
 
 {% endblock %}

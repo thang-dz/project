@@ -31,9 +31,14 @@
         <form id="sign-up-form" method="POST" action="/register">
           <h1>Create Account</h1>
           <br><br>
-          <input type="text" placeholder="Name" name="name" required />
-          <input type="email" placeholder="Email" name="email" required />
-          <input type="password" placeholder="Password" name="password" required />
+          <div class="form-group mb-3">
+            <label  class="font-weight-semibold text-dark">Name</label>
+            <input type="text" placeholder="Name" name="name" required />
+            <label  class="font-weight-semibold text-dark">Email</label>
+            <input type="email" placeholder="Email" name="email" required />
+            <label  class="font-weight-semibold text-dark">Password</label>
+            <input type="password" placeholder="Password" name="password" required />
+          </div>
           <button type="submit">Sign Up</button>
         </form>
       </div>
@@ -43,12 +48,31 @@
         <form id="sign-in-form" method="POST" action="/login">
           <h1>Sign In</h1>
           <br><br>
-          <input type="email" placeholder="Email" name="email" required />
-          <input type="password" placeholder="Password" name="password" required />
-          <a href="#">Forget Your Password?</a>
+          <div class="form-group mb-3">
+            <label  class="font-weight-semibold text-dark">Email</label>
+            <input type="email" placeholder="Email" name="email" required />
+            <br>
+            <label  class="font-weight-semibold text-dark">Password</label>
+            <input type="password" placeholder="Password" name="password" required />
+          </div>   
+          
+
           <button type="submit">Sign In</button>
         </form>
       </div>
+      <!-- Form Forgot Password -->
+      <div class="form-container forgot-password">
+        <form id="forgot-password-form" method="POST" action="/forgot-password">
+          <h1>Forgot Password</h1>
+          <br><br>
+          <div class="form-group mb-3">
+            <label class="font-weight-semibold text-dark">Enter your email address</label>
+            <input type="email" placeholder="Email" name="email" required />
+          </div>   
+          <button type="submit">Submit</button>
+        </form>
+      </div>
+
 
       <!-- Nút chuyển đổi giữa form -->
       <div class="toggle-container">
