@@ -82,9 +82,9 @@
                                             </form>
                                             
                                             <!-- Ship Button (only visible if status is 'Complete') -->
-                                            {% if batch.manufacturing_status == 'Complete' %}
+                                            {% if batch.manufacturing_status == 'Ready for Ship' %}
                                                 <form method="POST" action="{{ url_for('ship_product_batch', batch_id=batch.batch_id) }}" style="display:inline;">
-                                                    <button type="submit" class="btn btn-ac btn-sm hover-shadow" style="margin-top: 5px;">
+                                                    <button type="submit" class="btn btn-ac btn-sm hover-shadow" style=" display:inline;margin-top: 5px;">
                                                         <i class="fas fa-truck"></i> Ship
                                                     </button>
                                                 </form>

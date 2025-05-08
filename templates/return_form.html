@@ -31,38 +31,7 @@
             </ol>
         </div>
 
-        <!-- Create Return Request Form -->
-        <form method="POST">
-            <div class="form-group">
-                <label for="order_detail_id"><i class="fas fa-box"></i> Order Detail ID <span class="text-danger">*</span></label>
-                <select id="order_detail_id" name="order_detail_id" class="form-control" required>
-                    <option value="" disabled selected>Select Order Detail ID</option>
-                    {% for order_detail in order_details %}
-                        <option value="{{ order_detail.order_detail_id }}">
-                            {{ order_detail.order_relation.cus_name }} - 
-                            Address: {{ order_detail.order_relation.cus_address }} - 
-                            Order Date: {{ order_detail.order_relation.order_date }} - 
-                            Order Detail ID: {{ order_detail.order_detail_id }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Refund Method Selection -->
-            <div class="form-group">
-                <label for="refund_method"><i class="fas fa-credit-card"></i> Refund Method <span class="text-danger">*</span></label>
-                <select id="refund_method" name="refund_method" class="form-control" required>
-                    <option value="" disabled selected>Select Refund Method</option>
-                    <option value="Original Payment">Original Payment</option>
-                    <option value="Store Credit">Store Credit</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Submit Return Request</button>
-        </form>
-
+        
         <!-- Return Requests Table -->
         <div class="card mb-4 mt-5">
             <div class="card-header bg-primary text-white font-weight-bold">
@@ -72,11 +41,12 @@
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th>Return Request ID</th>
+                            <th>ID</th>
                             <th>Order Detail</th>
                             <th>Condition</th>
                             <th>Status</th>
-                            <th>Refund Method</th>
+                            <th>Reason</th>
+                            <th>Deficit</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -96,6 +66,7 @@
                                     </form>
                                 </td>
                                 <td>{{ re.return_status }}</td>
+                                <td></td>
                                 <td>{{ re.refund_method }}</td>
                                 <td>
                                     <form action="{{ url_for('delete_return', return_id=re.return_id) }}" method="POST" style="display:inline;">

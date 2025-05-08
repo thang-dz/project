@@ -39,20 +39,23 @@
                 <form method="POST">
                     <!-- Order Price -->
                     <div class="form-group">
-                        <label for="order_price"><i class="fas fa-tag"></i> Order Price</label>
+                        <label for="order_price"><i class="fas fa-tag"></i> Shipping Cost</label>
                         <input type="number" class="form-control" id="order_price" name="order_price" step="0.01" value="{{ shipping.shipping_cost }}" readonly>
                     </div>
 
-                    <!-- Shipping Cost -->
-                    <div class="form-group">
-                        <label for="shipping_cost"><i class="fas fa-truck"></i> Shipping Cost</label>
-                        <input type="number" class="form-control" id="shipping_cost" name="shipping_cost" step="0.01" value="{{ shipping.order.price }}" readonly>
-                    </div>
+                    <!-- <div class="form-group">
+                        <label for="shipping_cost"><i class="fas fa-truck"></i> Order Price</label>
+                        <input type="number" class="form-control" id="shipping_cost" name="shipping_cost" step="0.01" value="{{ shipcost  }}" readonly>
+                    </div> -->
 
                     <!-- Total Payment Amount -->
                     <div class="form-group">
-                        <label for="payment_amount"><i class="fas fa-money-bill-wave"></i> Payment Amount <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{ shipping.shipping_cost + shipping.order.price }}" required>
+                        <label for="payment_amount"><i class="fas fa-money-bill-wave"></i>Deposite Amount<span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{ shipping.order.deposit_amount  }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="payment_amount"><i class="fas fa-money-bill-wave"></i>Payment Amount<span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="payment_amount" name="payment_amount" step="0.01" value="{{ total_payment_amount }}" required>
                     </div>
 
                     <!-- Submit and Back Buttons -->
@@ -63,7 +66,5 @@
         </div>
     </div>
 </main>
-
-
 
 {% endblock %}

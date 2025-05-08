@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>View Return Request</title>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    <div class="alert alert-dismissible fade show fixed-alert">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-2">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
+
+<main>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
+                <i class="fas fa-undo"></i> View Return Request
+            </h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/view-return-request/{{ return_request.return_id }}" class="text-decoration-none text-muted">View Return Request</a></li>
+            </ol>
+        </div>
+
+        <!-- Return Request Details -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-list"></i> Return Request Details
+            </div>
+            <div class="card-body">
+                <h5><strong>Return Request ID:</strong> {{ return_request.return_id }}</h5>
+                <h5><strong>Order Detail:</strong> {{ return_request.order_detail.product_name }}</h5>
+                <h5><strong>Condition:</strong> {{ return_request.condition }}</h5>
+                <h5><strong>Status:</strong> {{ return_request.return_status }}</h5>
+                <h5><strong>Refund Method:</strong> {{ return_request.refund_method }}</h5>
+                <h5><strong>Inspection Date:</strong> {{ return_request.inspection_date }}</h5>
+                <h5><strong>Defect Reason:</strong> {{ return_request.defect_reason }}</h5>
+            </div>
+        </div>
+
+        <!-- Update Return Request Condition -->
+        {% if return_request.return_status == 'Processing' %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-white font-weight-bold">
+                <i class="fas fa-edit"></i> Update Product Condition
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('inspect_return', return_id=return_request.return_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to update the product condition?')" class="d-flex flex-column align-items-start">
+                    <select name="condition" class="form-control" id="condition-dropdown" onchange="this.form.submit();" {% if return_request.condition %}disabled{% endif %}>
+                        <option value="" disabled {% if not return_request.condition %}selected{% endif %}>Select Condition</option>
+                        <option value="Good" {% if return_request.condition == 'Good' %}selected{% endif %}>Good</option>
+                        <option value="Damaged" {% if return_request.condition == 'Damaged' %}selected{% endif %}>Damaged</option>
+                    </select>
+                    <noscript><button type="submit" class="btn btn-primary mt-2">Submit</button></noscript>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions Section -->
+        <div class="d-flex justify-content-between">
+            <form action="{{ url_for('delete_return', return_id=return_request.return_id) }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this return request?')"><i class="fas fa-trash"></i> Delete</button>
+            </form>
+
+            {% if return_request.return_status == "Processing" %}
+            <a href="{{ url_for('confirm_payment', return_id=return_request.return_id) }}" class="btn btn-success btn-sm"><i class="fas fa-check-circle"></i> Confirm</a>
+            {% endif %}
+        </div>
+    </div>
+</main>
+
+{% endblock %}

@@ -71,16 +71,17 @@
                             <td>{{ item.transaction_date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
                             <td>
                                 {% if item.category is none %}
-                                    <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex flex-column align-items-start">
-                                        <select name="category" required class="form-control mb-2">
-                                            <option value="" disabled selected>Select</option>
-                                            <option value="fabric">Fabric</option>
-                                            <option value="threads">Threads</option>
-                                            <option value="buttons">Buttons</option>
-                                            <option value="accessories">Accessories</option>
-                                        </select>
-                                        <button type="submit" class="btn btn-primary d-none">Classify</button>
-                                    </form>
+                                <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex align-items-center">
+                                    <select name="category" required class="form-control mb-2 mr-2" style="width: auto;">
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="fabric">Fabric</option>
+                                        <option value="threads">Threads</option>
+                                        <option value="buttons">Buttons</option>
+                                        <option value="accessories">Accessories</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">Classify</button>
+                                </form>
+                                
                                 {% else %}
                                     {{ item.category }}
                                 {% endif %}

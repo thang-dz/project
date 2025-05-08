@@ -49,7 +49,7 @@
                                     <th>Order ID</th>
                                     <th>Product Name</th>
                                     <th>Quantity</th>
-                                    <th>Status</th>
+                                    
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -59,7 +59,7 @@
                                         <td>{{ item.order_id }}</td>
                                         <td>{{ item.product_name }}</td>
                                         <td>{{ item.quantity }}</td>
-                                        <td>{{ item.status }}</td>
+                                        
                                         <td>
                                             {% if item.status=="Processing" %}
                                             <a href="{{ url_for('create_shipping_order', order_id=item.order_id) }}" class="btn btn-ac btn-sm hover-shadow">
