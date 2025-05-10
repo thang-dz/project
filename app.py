@@ -394,11 +394,29 @@ def dashboard():
 
 @app.route('/order_status_data')
 def get_order_status_data():
-    date_filter = request.args.get('date_filter', 'day') 
+    date_filter = request.args.get('date_filter', 'day')
+    
+    # Lấy ngày hiện tại
+    today = datetime.now().date()
+    
+    # Tính toán thời gian bắt đầu dựa trên bộ lọc
+    if date_filter == 'day':
+        start_date = today
+    elif date_filter == 'week':
+        # Tính ngày đầu tuần (thứ 2)
+        start_date = today - timedelta(days=today.weekday())
+    else:
+        # Mặc định là hôm nay nếu giá trị không hợp lệ
+        start_date = today
+    
+    # Truy vấn với điều kiện lọc theo thời gian
     order_status_data = db.session.query(
         Order.status,
-        func.count(Order.order_id)  
+        func.count(Order.order_id)
+    ).filter(
+        func.date(Order.order_date) >= start_date
     ).group_by(Order.status).all()
+    
     return jsonify([{'status': row.status, 'count': row[1]} for row in order_status_data])
 
 @app.route('/inventorypro/')
