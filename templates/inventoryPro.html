@@ -40,19 +40,21 @@
                 <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0" style="table-layout: fixed;">
                     <thead class="bg-light">
                         <tr>
+                            <th>ID</th>
                             <th>Product Name</th>
                             <th>Quantity</th>
                             <th>Date</th>
-                            <th>Category</th>
+                           
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in inventorypro %}
                             <tr>
+                                <td>{{item.id}}</td>
                                 <td>{{ item.product_name }}</td>
                                 <td>{{ item.quantity }} </td>
-                                <td>{{ item.date.strftime('%d-%m-%Y') }}</td>
-                                <td></td>
+                                <td>{{ item.date.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                               
                             </tr>
                         {% endfor %}
                     </tbody>

@@ -180,9 +180,7 @@ class ProductBatch(db.Model):
     order_detail_id = db.Column(db.Integer, db.ForeignKey('order_details.order_detail_id'))
     order_detail = db.relationship('OrderDetail', backref='product_batches')
 
-    quantity_in_production = db.Column(db.Integer, default=0)
-    quantity_completed = db.Column(db.Integer, default=0)
-    quantity_ready_for_shipping = db.Column(db.Integer, default=0)
+    quantity_completed = db.Column(db.Integer, default=0)    
 
     manufacturing_status = db.Column(db.String(50), default='In Production')
     product_condition = db.Column(db.String(50), nullable=True)
@@ -193,7 +191,7 @@ class ProductBatch(db.Model):
     quantity_to_update=db.Column(db.Integer, default=0)
 
     inventory = db.relationship('Inventory', secondary=product_batch_materials, backref='product_batches')
-    
+    price = db.Column(db.Float)
 
     def __repr__(self):
         return f"<Batch #{self.batch_id} - OrderDetail #{self.order_detail_id}>"
@@ -230,6 +228,8 @@ class Shipping(db.Model):
     pay_method=db.Column(db.String(255), nullable=False)
     shipment_time = db.Column(db.DateTime, default=vietnam_now)
     order = db.relationship('Order', backref='shipping_details')
+    price = db.Column(db.Float)
+    quan = db.Column(db.Numeric(10, 2), nullable=False)
 
     def __repr__(self):
         return f"<Shipping {self.shipping_id} - Order {self.order_id}>"
@@ -254,11 +254,11 @@ class ReturnRequest(db.Model):
     condition = db.Column(db.String(50)) 
     defect_reason = db.Column(db.String(255))  
     inspection_date = db.Column(db.DateTime, default=vietnam_now)
-    refund_method  = db.Column(db.String(100))  
+    refund_method  = db.Column(db.String(100))     
+    quan = db.Column(db.Numeric(10, 2), nullable=False)
   
-   
-
     order_detail = db.relationship('OrderDetail', backref='return_requests')
+    
 
 
 # Khởi tạo Database
@@ -296,7 +296,7 @@ def register():
         login_user(new_user)
         return redirect(url_for("login"))
     # Passing True or False if the user is authenticated.
-    return render_template("register.html", logged_in=current_user.is_authenticated)
+    return render_template("login.html", logged_in=current_user.is_authenticated)
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -661,18 +661,7 @@ def update_import(import_id):
                 inventory_item.quantity = import_record.quantity_in_stock  
                 db.session.commit()
             flash("Material updated successfully !", "success")
-            return redirect(url_for('view_import'))
-        # else:
-        #     flash("Inventory item not found for this import.", "danger")
-           
-        #     new_inventory_item = Inventory(
-        #         product_name=import_record.material_name,
-        #         quantity=import_record.quantity_in_stock,
-        #         transaction_type="Addition",  # Thêm vào kho
-        #         import_id=import_record.import_id,
-        #     )
-        #     db.session.add(new_inventory_item)
-        #     db.session.commit()
+            return redirect(url_for('view_import'))      
         return redirect(url_for('view_import'))
     return render_template("update-import.html", import_record=import_record)
 
@@ -820,7 +809,7 @@ def add_order():
         new_order.price = total_price
         db.session.commit()
 
-        flash("Order added successfully with multiple products!", "success")
+        flash("Order added successfully!", "success")
         return redirect("/order/")
 
     return render_template('add-order.html')
@@ -928,7 +917,11 @@ def add_product_batch():
             flash("Batch count must be greater than 0.", 'danger')
             return redirect(url_for('add_product_batch'))
 
-        # Create the requested number of product batches
+        order_detail = OrderDetail.query.get(order_detail_id)
+        if not order_detail:
+            flash("Invalid order detail selected.", 'danger')
+            return redirect(url_for('add_product_batch'))
+        
         created_batches = []
         for i in range(batch_number):
             batch_number = f"Batch-{len(OrderDetail.query.get(order_detail_id).product_batches) + i + 1}"
@@ -937,7 +930,8 @@ def add_product_batch():
             new_batch = ProductBatch(
                 order_detail_id=order_detail_id,
                 batch_number=batch_number,
-                category=category
+                category=category,
+                price=order_detail.product_price 
             )
 
             # Link materials to the batch (many-to-many relationship)
@@ -1077,7 +1071,7 @@ def ship_product_batch(batch_id):
         product_name=product_batch.order_detail.product_name,
         quantity=product_batch.quantity_completed,
         status="Processing" ,
-        price= product_batch.quantity_completed * product_batch.order_detail.product_price
+        price= product_batch.quantity_completed * product_batch.price
     )
     db.session.add(shipping_queue_item)
     db.session.commit()
@@ -1092,7 +1086,8 @@ def ship_product_batch(batch_id):
 @app.route('/shipping-queue/', methods=["GET"])
 @login_required
 def shipping_queue_list():
-    shipping_queue_items = ShippingQueue.query.all()
+    shipping_queue_items = ShippingQueue.query.filter(ShippingQueue.status == "Processing").all()
+
     return render_template('shipping_queue.html', shipping_queue_items=shipping_queue_items)
 
 @app.route('/create-shipping-order/<int:order_id>', methods=["GET", "POST"])
@@ -1105,6 +1100,7 @@ def create_shipping_order(order_id):
         pay_method = request.form['pay_method']
         shipping_cost = request.form.get('shipping_cost', type=float)
         shipment_time = request.form.get('shipment_time') 
+        price=request.form.get('price') 
         if not provider:
             flash("Shipping provider must be selected.", "danger")
             return redirect(url_for('create_shipping_order', order_id=order_id))
@@ -1122,11 +1118,15 @@ def create_shipping_order(order_id):
             shipping_cost=shipping_cost,
             pay_method=pay_method,
             shipping_status="Processing",
-            shipment_time=shipment_time)
+            shipment_time=shipment_time,
+            )
 
         try:
             db.session.add(shipping)
-            db.session.commit()  
+            shipping.quan=shipping_queue_item.quantity
+            shipping.price=shipping_queue_item.price
+            db.session.commit()
+
             flash(f"Shipping order created for Order #{order_id} with tracking code {tracking_code}.", 'success')
             return redirect(url_for('shipping_list', shipping_id=shipping.shipping_id))
         except Exception as e:
@@ -1138,43 +1138,60 @@ def generate_tracking_code():
     length = 10
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
-# @app.route('/confirm-shipping-payment/<int:shipping_id>', methods=["POST", "GET"])
-# @login_required
-# def confirm_shipping_payment(shipping_id):
-#     shipping = Shipping.query.get_or_404(shipping_id)
-#     order = Order.query.get_or_404(shipping.order_id)     
-#     shipping_queue= ShippingQueue.query.filter_by(order_id=order.order_id).all()
-#     if request.method == "POST":
-#         try:
-#             payment_amount = float(request.form['payment_amount'])            
-#             if payment_amount < shipping.shipping_cost:
-#                 flash("Insufficient payment for shipping.", "danger")
-#                 return redirect(url_for('confirm_shipping_payment', shipping_id=shipping_id))
-#             shipping.shipping_status = "Paid"            
-#             shipping_queue_items = ShippingQueue.query.filter_by(order_id=order.order_id).all()
-#             for shipping_queue_item in shipping_queue_items:
-#                 shipping_queue_item.status = "Delivered"
-#             order_details = OrderDetail.query.filter_by(order_id=order.order_id).all()
-#             product_batches = ProductBatch.query.filter(ProductBatch.order_detail_id.in_([od.order_detail_id for od in order_details])).all()
-#             all_shippings = Shipping.query.filter_by(order_id=order.order_id).all()
-#             if all(s.shipping_status == "Paid" for s in all_shippings)  and all(pb.manufacturing_status == "Completed" for pb in product_batches): 
-#                 order.status = "Delivered"            
-#             db.session.commit()  # Commit only once after all changes            
-#             flash("Shipping payment confirmed. Shipping marked as Paid.", "success")
-#             return redirect(url_for('view_shipping', shipping_id=shipping_id))        
-#         except ValueError:
-#             flash("Invalid payment amount. Please enter a valid number.", "danger")
-#         except Exception as e:
-#             db.session.rollback()
-#             flash(f"Error during payment confirmation: {str(e)}", 'danger')    
-   
-  
-#     # calculated = sum(od.quantity * od.unit_price  for od in order_details)
-#     # deposit=calculated*
-#     total_payment_amount =int( float(shipping.shipping_cost) + float(shipping.order.deposit_amount))
+@app.route('/confirm-shipping-payment/<int:shipping_id>', methods=["POST", "GET"])
+@login_required
+def confirm_shipping_payment(shipping_id):
+    shipping = Shipping.query.get_or_404(shipping_id)
+    order = Order.query.get_or_404(shipping.order_id)
+    shipping_queue = ShippingQueue.query.filter_by(order_id=order.order_id).all()
+    order_details = OrderDetail.query.filter_by(order_id=order.order_id).all()
 
-#     return render_template('confirm_shipping_payment.html', shipping=shipping,
-#                             total_payment_amount=total_payment_amount, shipping_queue=shipping_queue)
+    # Truy vấn product_batches một lần dùng cho cả GET và POST
+    product_batches = ProductBatch.query.filter(
+        ProductBatch.order_detail_id.in_([od.order_detail_id for od in order_details])
+    ).all()
+
+    if request.method == "POST":
+        try:
+            payment_amount = float(request.form['payment_amount'])
+
+            if payment_amount < shipping.shipping_cost:
+                flash("Insufficient payment for shipping.", "danger")
+                return redirect(url_for('confirm_shipping_payment', shipping_id=shipping_id))
+
+            shipping.shipping_status = "Paid"
+
+            # Cập nhật trạng thái shipping queue
+            for shipping_queue_item in shipping_queue:
+                shipping_queue_item.status = "Delivered"
+
+            all_shippings = Shipping.query.filter_by(order_id=order.order_id).all()
+            if all(s.shipping_status == "Paid" or s.shipping_status =="Cancelled" for s in all_shippings) and \
+               all(pb.manufacturing_status == "Completed" for pb in product_batches):
+                order.status = "Delivered"
+
+            db.session.commit()
+            flash("Shipping payment confirmed. Shipping marked as Paid.", "success")
+            return redirect(url_for('view_shipping', shipping_id=shipping_id))
+
+        except ValueError:
+            flash("Invalid payment amount. Please enter a valid number.", "danger")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error during payment confirmation: {str(e)}", 'danger')    
+
+    deposit = (shipping.price * shipping.order.deposit_percent) / 100
+    total_payment_amount = int(float(shipping.shipping_cost) + float(deposit))
+
+   
+    return render_template(
+        'confirm_shipping_payment.html',
+        shipping=shipping,
+        deposit=deposit,
+        total_payment_amount=total_payment_amount,
+        shipping_queue=shipping_queue
+    )
+
 
 @app.route('/shipping-list/', methods=["GET"])
 @login_required
@@ -1235,95 +1252,62 @@ def delete_shipping_queue(shipping_queue_id):
     return redirect(url_for('shipping_queue_list'))
 
 
-@app.route('/create-return/', methods=['GET', 'POST'])
-def create_return():    
-    returns = ReturnRequest.query.all()  
-    if request.method == 'POST':
-        order_detail_id = request.form.get('order_detail_id')
-        condition = request.form.get('condition')
-        refund_method = request.form.get('refund_method')    
-        if not refund_method:
-            flash("Please select a refund method to proceed.", "danger")
-            return redirect(url_for('create_return'))
-        if not order_detail_id:
-            flash("Order Detail ID is required.", "danger")
-            return redirect(url_for('create_return'))
-        order_detail = OrderDetail.query.get(order_detail_id)
-        if not order_detail:
-            flash("Invalid order detail ID.", "danger")
-            return redirect(url_for('create_return'))    
-        order = order_detail.order_relation  
-        if order.status != 'Delivered': 
-            flash("Return request can only be created for delivered orders.", "danger")
-            return redirect(url_for('view_returns'))  
-        if order_detail.odstarus != "Processing":  
-            flash("Return request can only be created for processing order details.", "danger")
-            return redirect(url_for('create_return')) 
-        new_return = ReturnRequest(
-            order_detail_id=order_detail_id,
-            condition=condition,
-            return_status='Pending',
-            refund_method=refund_method
-        )
-        db.session.add(new_return)
-        order_detail.odstarus = "Done"
-        order.status = 'Processing'   
-        if order.shipping_details:  
-            shipment_time = order.shipping_details[0].shipment_time  
-            return_window = timedelta(days=1)  
-            if shipment_time + return_window < datetime.now():
-                flash(f"Return period has expired for this item.", "danger")                
-                return redirect(url_for('create_return'))
-        else:
-            flash("No shipping information found. Cannot process return request.", "danger")
-            return redirect(url_for('create_return'))   
-        db.session.commit()       
-        flash("Return request created successfully.", "success")
-        return redirect(url_for('create_return'))
-    order_details = OrderDetail.query.join(Order).filter(Order.status == 'Delivered', OrderDetail.odstarus == "Processing").all()
-    return render_template('return_form.html', order_details=order_details, returns=returns)
 
-@app.route('/confirm-shipping-payment/<int:shipping_id>', methods=["POST", "GET"])
+@app.route('/returns/')
 @login_required
-def confirm_shipping_payment(shipping_id):
-    shipping = Shipping.query.get_or_404(shipping_id)
-    order = Order.query.get_or_404(shipping.order_id)
-    order_detail = order.order_details[0]  
-    if request.method == "POST":
-        try:
-            payment_amount = float(request.form['payment_amount'])
-            if payment_amount < shipping.shipping_cost:
-                flash("Insufficient payment for shipping.", "danger")
-                return redirect(url_for('confirm_shipping_payment', shipping_id=shipping_id))
-            
-            # Xử lý logic thanh toán nếu có
-            shipping.shipping_status = "Paid"
-            db.session.commit()
-            flash("Shipping payment confirmed. Shipping marked as Paid.", "success")
-            return redirect(url_for('view_shipping', shipping_id=shipping_id))
+def returns():
+    return_request = ReturnRequest.query.all()    
+    shipping = Shipping.query.all()
+    return render_template("returns.html",return_request=return_request, shipping=shipping  )
 
-        except ValueError:
-            flash("Invalid payment amount. Please enter a valid number.", "danger")
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error during payment confirmation: {str(e)}", 'danger')
-   
-    # Logic cho nút Cancelled
-    if request.args.get('cancelled'):
-        # Tạo Return Request mới khi người dùng nhấn "Cancelled"
-        return_request = ReturnRequest(
-            order_detail_id=order_detail.order_detail_id,  # Lấy order_detail_id từ OrderDetail
-            condition="N/A",  # Điều kiện có thể là thông tin từ yêu cầu
-            defect_reason="Cancelled by customer",
-            refund_method="N/A"
+@app.route('/create-return/<int:shipping_id>', methods=['GET', 'POST'])
+def create_return(shipping_id):
+    shipping = Shipping.query.get_or_404(shipping_id)   
+    order=Order.query.get_or_404(shipping.order_id)    
+    shipping.shipping_status ="Cancelled" 
+    order.status="Cancelled" 
+    total_amount = shipping.price    
+    deposit_amount =(shipping.price * shipping.order.deposit_percent) / 100
+    deficit_amount = float(total_amount) - float(deposit_amount)
+    new_return = ReturnRequest(
+        order_detail_id=shipping.order_id,
+        return_status='Cancelled',          
+        refund_method=deficit_amount,     
+        quan=shipping.quan
+    )
+    db.session.add(new_return)
+    db.session.commit()
+    flash('Return request created successfully!', 'success')
+    return redirect(url_for('returns'))
+
+@app.route('/classify-condition/<int:return_id>', methods=["POST"])
+@login_required
+def classify_condition(return_id):
+    return_request = ReturnRequest.query.get_or_404(return_id)
+    order_detail= OrderDetail.query.get_or_404(return_request.return_id)    
+    condition = request.form.get('condition')
+    return_request.condition = condition
+    db.session.commit()
+    if condition == "Good":
+        inventory_product = InventoryProduct(
+            product_name=order_detail.product_name,
+            quantity=float(return_request.quan),  
+            date=vietnam_now() ,          
+            
         )
-        db.session.add(return_request)
+        db.session.add(inventory_product)
         db.session.commit()
 
-        flash("Return request created due to cancellation.", "warning")
-        return redirect(url_for('view_return_request', return_id=return_request.return_id))  # Chuyển hướng trực tiếp đến view-return-request
+    return redirect(url_for('returns'))
 
-    return render_template('confirm_shipping_payment.html', shipping=shipping)
+@app.route('/classify_defect_reason/<int:return_id>', methods=["POST"])
+@login_required
+def classify_defect_reason(return_id):
+    return_request = ReturnRequest.query.get_or_404(return_id)  
+    defect_reason = request.form.get('defect_reason')  
+    return_request.defect_reason = defect_reason  
+    db.session.commit()          
+    return redirect(url_for('returns')) 
 
 @app.route('/view-return-request/<int:return_id>', methods=["GET"])
 @login_required
@@ -1331,100 +1315,44 @@ def view_return_request(return_id):
     return_request = ReturnRequest.query.get_or_404(return_id)
     return render_template('view-return-request.html', return_request=return_request)
 
-@app.route('/inspect-return/<int:return_id>', methods=["POST"])
-@login_required
-def inspect_return(return_id):
-    return_request = ReturnRequest.query.get_or_404(return_id)
-    
-    # Kiểm tra điều kiện sản phẩm
-    if request.method == "POST":
-        new_condition = request.form['condition']
-        return_request.condition = new_condition
-        db.session.commit()
-        
-        flash("Return request condition updated.", "success")
-        return redirect(url_for('view_return_request', return_id=return_id))
-@app.route('/delete-return/<int:return_id>', methods=["POST"])
-@login_required
+
+
+
+@app.route('/delete-return/<int:return_id>', methods=['POST'])
 def delete_return(return_id):
+    print(f"Attempting to delete return with ID: {return_id}")
     return_request = ReturnRequest.query.get_or_404(return_id)
-    
-    # Xóa yêu cầu trả lại
-    db.session.delete(return_request)
-    db.session.commit()
-    
-    flash("Return request deleted successfully.", "danger")
-    return redirect(url_for('return_requests_list'))  # Chuyển hướng đến danh sách yêu cầu trả lại
+    order_detail = return_request.order_detail
+    order = order_detail.order_relation if order_detail else None
+    try:
+        if order_detail and order:
+            order_detail.odstarus = "Processing"  
+            order.status = 'Delivered'
+        db.session.delete(return_request)
+        db.session.commit()
+        flash("Return request deleted successfully.", "success")
+    except Exception as e:
+        db.session.rollback() 
+        flash(f"Error deleting return request: {str(e)}", "danger")
+    return redirect(url_for('returns'))
+
+@app.route('/inspect-return/<int:return_id>', methods=['GET', 'POST'])
+def inspect_return(return_id):
+    return_request = ReturnRequest.query.get_or_404(return_id)    
+    if request.method == 'POST':
+        # Lấy điều kiện từ form
+        condition = request.form.get('condition')        
+        if condition not in ['Good', 'Damaged']:
+            flash("Invalid product condition.", "danger")
+            return redirect(url_for('view_returns'))
+        return_request.return_status = "Processing"
+        return_request.condition = condition
+        db.session.commit() 
+        flash("Return inspected successfully.", "success")
+        return redirect(url_for('create_return'))  
+    return render_template('return_form.html', return_request=return_request)
 
 
-# @app.route('/delete-return/<int:return_id>', methods=['POST'])
-# def delete_return(return_id):
-#     print(f"Attempting to delete return with ID: {return_id}")
-#     return_request = ReturnRequest.query.get_or_404(return_id)
-#     order_detail = return_request.order_detail
-#     order = order_detail.order_relation if order_detail else None
-#     try:
-#         if order_detail and order:
-#             order_detail.odstarus = "Processing"  
-#             order.status = 'Delivered'
-#         db.session.delete(return_request)
-#         db.session.commit()
-#         flash("Return request deleted successfully.", "success")
-#     except Exception as e:
-#         db.session.rollback() 
-#         flash(f"Error deleting return request: {str(e)}", "danger")
-#     return redirect(url_for('create_return'))
-
-# @app.route('/inspect-return/<int:return_id>', methods=['GET', 'POST'])
-# def inspect_return(return_id):
-#     return_request = ReturnRequest.query.get_or_404(return_id)    
-#     if request.method == 'POST':
-#         # Lấy điều kiện từ form
-#         condition = request.form.get('condition')        
-#         if condition not in ['Good', 'Damaged']:
-#             flash("Invalid product condition.", "danger")
-#             return redirect(url_for('view_returns'))
-#         return_request.return_status = "Processing"
-#         return_request.condition = condition
-#         db.session.commit() 
-#         flash("Return inspected successfully.", "success")
-#         return redirect(url_for('create_return'))  
-#     return render_template('return_form.html', return_request=return_request)
-
-# @app.route('/confirm-payment/<int:return_id>', methods=['GET', 'POST'])
-# def confirm_payment(return_id):
-#     return_request = ReturnRequest.query.get_or_404(return_id)
-#     order_detail = return_request.order_detail
-#     order = order_detail.order_relation if order_detail else None  
-    
-#     order.status='Cancelled'
-#     if request.method == 'POST':        
-#         if order:
-#             order.price = 0
-        
-#         if return_request.condition == 'Good':
-#             return_request.return_status = 'Completed'
-#             if order_detail:
-#                 new_inventory = InventoryProduct(
-#                     product_name=order_detail.product_name,
-#                     quantity=order_detail.quantity,
-#                     date=vietnam_now()
-#                 )
-#                 db.session.add(new_inventory)
-                
-#             db.session.commit()
-#             flash("Payment confirmed. Product added to inventory.", "success")
-#             return redirect(url_for('create_return'))
-
-#         # 3. Handle "Defective" condition → mark complete only
-#         if return_request.condition == 'Damaged':
-#             return_request.return_status = 'Completed'
-                          
-#             db.session.commit()
-#             flash("Defective product marked as completed.", "warning")
-#             return redirect(url_for('create_return'))
-
-#     return render_template('confirm_payment.html', return_request=return_request)
 
 
 

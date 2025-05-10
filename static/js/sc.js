@@ -9,3 +9,12 @@ registerBtn.addEventListener("click", () => {
 loginBtn.addEventListener("click", () => {
   container.classList.remove("active");
 });
+window.addEventListener('load', function() {
+  const alertContainer = document.querySelector('.fixed-alert');
+  if (alertContainer) {
+      alertContainer.classList.add('show');  // Show the alert
+      setTimeout(() => {
+          alertContainer.classList.remove('show');  // Hide after 5 seconds
+      }, 5000); // Adjust the time as needed
+  }
+});

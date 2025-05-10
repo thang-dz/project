@@ -22,17 +22,14 @@
         <!-- Header Section -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">
-                <i class="fas fa-undo"></i> Create Return Request
+                <i class="fas fa-undo"></i> Cancellation Tracker
             </h1>
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="/create-return/" class="text-decoration-none text-muted">Create Return Request</a></li>
-                
+                <li class="breadcrumb-item"><a href="/create-return/" class="text-decoration-none text-muted">Cancellation Tracker</a></li>
             </ol>
         </div>
 
-        
-        <!-- Return Requests Table -->
         <div class="card mb-4 mt-5">
             <div class="card-header bg-primary text-white font-weight-bold">
                 <i class="fas fa-list"></i> Return Requests
@@ -66,7 +63,10 @@
                                     </form>
                                 </td>
                                 <td>{{ re.return_status }}</td>
-                                <td></td>
+                                
+                                <!-- Reason Column with Editable Field -->
+                                <td contenteditable="true" id="reason-{{ re.return_id }}" class="editable-reason" onblur="saveReason({{ re.return_id }})">{{ re.defect_reason }}</td>
+        
                                 <td>{{ re.refund_method }}</td>
                                 <td>
                                     <form action="{{ url_for('delete_return', return_id=re.return_id) }}" method="POST" style="display:inline;">
@@ -84,4 +84,32 @@
         </div>
     </div>
 </main>
+
 {% endblock %}
+
+<script>
+    // Function to save the updated reason when the user clicks out of the editable field
+    function saveReason(returnId) {
+        var reason = document.getElementById('reason-' + returnId).innerText;
+
+        // Send the updated reason to the server via AJAX
+        fetch('/update-return-reason/' + returnId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'  // CSRF token for security (if you're using Flask-WTF or similar)
+            },
+            body: JSON.stringify({
+                reason: reason
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Reason updated successfully!");
+            } else {
+                alert("Failed to update reason.");
+            }
+        });
+    }
+</script>

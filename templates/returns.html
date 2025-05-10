@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}
+<title>Add New Import</title>
+{% endblock %}
+
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+    <div class="alert alert-dismissible fade show fixed-alert">
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-2">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endwith %}
+<main>
+    <div class="container-fluid mt-5">
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">Add New Material</h1>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
+                <li class="breadcrumb-item active">Add Material</li>
+            </ol>
+        </div>
+
+        <!-- Material List -->
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-primary text-white font-weight-bold">
+                <i class="fas fa-box-open"></i> Material List
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Order Detail</th>
+                            <th>Condition <span class="text-danger">*</span></th>
+                            <th>Defect Reason <span class="text-danger">*</span></th>                        
+                            <th>Deficit</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in return_request %}
+                        <tr>
+                            <td>{{ item.return_id }}</td>
+                            <td>{{ item.order_detail_id }}</td>
+                            <!-- Condition Editable -->
+                            <td>
+                                {% if item.condition is none %}
+                                <form action="{{ url_for('classify_condition', return_id=item.return_id) }}" method="POST" class="d-flex align-items-center">
+                                    <select name="condition" required class="form-control mb-2 mr-2" style="inline-size: none;">
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="Good" {% if item.condition == 'Good' %}selected{% endif %}>Good</option>
+                                        <option value="Damaged" {% if item.condition == 'Damaged' %}selected{% endif %}>Damaged</option>                                      
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">Classify</button>
+                                </form>
+                                {% else %}
+                                    {{ item.condition }}
+                                {% endif %}
+                            </td>
+
+                            <!-- Defect Reason Editable -->
+                            <td>
+                                {% if not item.defect_reason %}                                    
+                                    <form action="{{ url_for('classify_defect_reason', return_id=item.return_id) }}" method="POST" class="d-flex flex-column align-items-start">
+                                        <input type="text" name="defect_reason" placeholder="Enter defect reason" required class="form-control mb-2">                                        
+                                    </form>
+                                {% else %}
+                                    {{ item.defect_reason }}
+                                {% endif %}
+                            </td>  
+
+                            <td style="color: red; text-align: right;">
+                                {{ item.refund_method  }}
+                            </td>
+                            
+                            <td>{{ item.return_status }}</td>
+                            <td>
+                                <form action="{{ url_for('delete_return', return_id=item.return_id) }}" method="POST">
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+{% endblock %}

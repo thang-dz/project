@@ -72,7 +72,7 @@
                             <td>
                                 {% if item.category is none %}
                                 <form action="{{ url_for('classify_material', inventory_id=item.stockTran_id) }}" method="POST" class="d-flex align-items-center">
-                                    <select name="category" required class="form-control mb-2 mr-2" style="width: auto;">
+                                    <select name="category" required class="form-control mb-2 mr-2" style="inline-size: none;">
                                         <option value="" disabled selected>Select</option>
                                         <option value="fabric">Fabric</option>
                                         <option value="threads">Threads</option>
