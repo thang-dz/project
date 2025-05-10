@@ -20,17 +20,17 @@
     <div class="container-fluid mt-5">
         <!-- Header Section -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;">Add New Material</h1>
+            <h1 class="text-dark font-weight-bold" style="font-size: 2rem;"><i class="fas fa-box-open"></i> Cancellation Tracker</h1>
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fas fa-home mr-1"></i> Dashboard</a></li>
-                <li class="breadcrumb-item active">Add Material</li>
+                <li class="breadcrumb-item active"><i class="fas fa-box-open"></i> Cancellation Tracker</li>
             </ol>
         </div>
 
         <!-- Material List -->
         <div class="card shadow-lg border-0 mb-4">
             <div class="card-header bg-primary text-white font-weight-bold">
-                <i class="fas fa-box-open"></i> Material List
+                <i class="fas fa-box-open"></i> Cancell List
             </div>
             <div class="card-body">
                 <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
@@ -57,7 +57,7 @@
                                     <select name="condition" required class="form-control mb-2 mr-2" style="inline-size: none;">
                                         <option value="" disabled selected>Select</option>
                                         <option value="Good" {% if item.condition == 'Good' %}selected{% endif %}>Good</option>
-                                        <option value="Damaged" {% if item.condition == 'Damaged' %}selected{% endif %}>Damaged</option>                                      
+                                        <option value="Broken" {% if item.condition == 'Broken' %}selected{% endif %}>Broken</option>                                      
                                     </select>
                                     <button type="submit" class="btn btn-primary btn-sm">Classify</button>
                                 </form>

@@ -7,9 +7,9 @@
 {% block content %}
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-    <div class="alert alert-dismissible fixed-alert">
+    <div class="alert alert-dismissible fixed-alert custom-alert">
         {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
+            <div class="alert alert-{{ category }} custom-alert-message">{{ message }}</div>
         {% endfor %}
     </div>
 {% endif %}
@@ -93,5 +93,4 @@
 </main>
 
 {% endblock %}
-
 

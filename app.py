@@ -71,6 +71,7 @@ class Order(db.Model):
     price = db.Column(db.Numeric(10, 2), nullable=False)
     deposit_amount = db.Column(db.Float, nullable=False, default=0.0)
     deposit_percent = db.Column(db.Float, nullable=False, default=0.0)
+    orprice=db.Column(db.Numeric(10, 2), nullable=False)
 
 
     status = db.Column(db.String(50), default="Processing")
@@ -80,33 +81,25 @@ class Order(db.Model):
     def __repr__(self):
         return f'<Order {self.order_id}>'
 def add_monthly_data():
-    # Lấy năm hiện tại
+    
     current_year = datetime.now().year
-
-    # Danh sách các tháng từ tháng 1 đến tháng 6
-    months = [f"{current_year}-{str(month).zfill(2)}" for month in range(1, 4)]  # Tháng 1 đến tháng 6
-
-    # Kiểm tra xem có dữ liệu cho các tháng này trong cơ sở dữ liệu chưa
+    months = [f"{current_year}-{str(month).zfill(2)}" for month in range(1, 4)] 
     for month in months:
-        # Kiểm tra xem đã có dữ liệu cho tháng này chưa
-        existing_month_data = db.session.query(Order).filter(Order.order_date.like(f'{month}%')).first()
-        
+        existing_month_data = db.session.query(Order).filter(Order.order_date.like(f'{month}%')).first()        
         if not existing_month_data:
-            # Nếu không có dữ liệu cho tháng này, thêm vào dữ liệu mặc định
-            order_date = datetime.strptime(f"{month}-01", "%Y-%m-%d")  # Chuyển chuỗi thành đối tượng datetime
+            order_date = datetime.strptime(f"{month}-01", "%Y-%m-%d")  
             new_order = Order(
                 cus_name="Default Customer",
                 cus_contact="Default Contact",
                 cus_address="Default Address",
-                order_date=order_date,  # Dùng đối tượng datetime cho order_date
+                order_date=order_date,  
                 price=100000000,
                 deposit_amount=2000000,
-                status="Delivered"
+                status="Delivered",
+                orprice=100000000
             )
             db.session.add(new_order)
             print(f"Đã thêm dữ liệu mặc định cho tháng {month}")
-    
-    # Lưu thay đổi vào cơ sở dữ liệu
     db.session.commit()
 @app.before_request
 def initialize_data():
@@ -230,6 +223,7 @@ class Shipping(db.Model):
     order = db.relationship('Order', backref='shipping_details')
     price = db.Column(db.Float)
     quan = db.Column(db.Numeric(10, 2), nullable=False)
+    status = db.Column(db.String(50), default='Processing')
 
     def __repr__(self):
         return f"<Shipping {self.shipping_id} - Order {self.order_id}>"
@@ -294,8 +288,9 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user)
+        flash('Account created successfully') 
         return redirect(url_for("login"))
-    # Passing True or False if the user is authenticated.
+      
     return render_template("login.html", logged_in=current_user.is_authenticated)
 
 @app.route('/login', methods=["GET", "POST"])
@@ -313,7 +308,7 @@ def login():
             return redirect(url_for('login'))
         else:
             login_user(user)
-            flash('Account created successfully')
+            # flash('Account created successfully')
             return redirect(url_for('dashboard'))
     # Passing True or False if the user is authenticated.
     return render_template("login.html", logged_in=current_user.is_authenticated)
@@ -329,9 +324,9 @@ def get_daily_sales_data():
     daily_sales_data = db.session.query(
         db.func.strftime('%Y-%m', Order.order_date).label('month_year'),
         db.func.strftime('%d', Order.order_date).label('day'),
-        db.func.sum(Order.price).label('total_sales')
+        db.func.sum(Order.orprice).label('total_sales')
     ).filter(
-        Order.status == 'Delivered'  
+       (Order.status == 'Delivered') | (Order.status == 'Cancelled')
     ).group_by(
         db.func.strftime('%Y-%m', Order.order_date),
         db.func.strftime('%d', Order.order_date)
@@ -339,8 +334,8 @@ def get_daily_sales_data():
     
     return [
         {
-            'month': row.month_year.split('-')[1],  # Extract month part (MM)
-            'day': row.day,                         # Day part (DD)
+            'month': row.month_year.split('-')[1], 
+            'day': row.day,                         
             'total_sales': float(row.total_sales) if row.total_sales else 0.0
         }
         for row in daily_sales_data
@@ -349,7 +344,7 @@ def get_daily_sales_data():
 def get_sales_data():
     sales_data = db.session.query(
         db.func.strftime('%Y-%m', Order.order_date).label('month'),
-        db.func.sum(Order.price).label('total_sales')
+        db.func.sum(Order.orprice).label('total_sales')
     ).filter(
         Order.status == 'Delivered'  
     ).group_by(
@@ -368,7 +363,7 @@ def get_top_selling_products():
         OrderDetail.product_name,
         db.func.sum(OrderDetail.quantity).label('total_quantity')
     ).filter(
-        OrderDetail.odstarus == 'Processing'  
+        OrderDetail.odstarus == 'Done'  
     ).group_by(
         OrderDetail.product_name
     ).order_by(
@@ -387,13 +382,13 @@ def get_top_selling_products():
 @login_required
 def dashboard():
     sales_data = get_sales_data()
-    daily_sales_data = get_daily_sales_data()  # Fixed variable name
+    daily_sales_data = get_daily_sales_data()  
     top_products = get_top_selling_products()
 
     return render_template(
         'dashboard.html',
         sales_data=sales_data,
-        daily_sales_data=daily_sales_data,  # Make sure the template variable name matches
+        daily_sales_data=daily_sales_data,  
         top_products=top_products
     )
 
@@ -486,16 +481,7 @@ def create_purchase_request(import_id):
 @login_required
 def add_imports():
     if request.method == "POST":
-        material_name = request.form["material_name"]
-        if not material_name.isalpha():
-            flash("Material name should only contain alphabets.", "danger")
-            return render_template("add-imports.html")
-
-        # Kiểm tra xem material_name đã tồn tại trong cơ sở dữ liệu chưa
-        # existing_material = Import.query.filter_by(material_name=material_name).first()
-        # if existing_material:
-        #     flash("Material name already exists. Please choose a different name.", "danger")
-        #     return render_template("add-imports.html")
+        material_name = request.form["material_name"]     
 
         material_description = request.form.get("material_description", "")
         quantity_in_stock = int(request.form.get("quantity_in_stock", 0))
@@ -768,7 +754,8 @@ def add_order():
             price=price,
             order_date=order_date,
             deposit_amount=deposit_amount  ,
-            deposit_percent=deposit_percent
+            deposit_percent=deposit_percent,
+            orprice=price
         )
         db.session.add(new_order)
         db.session.commit()
@@ -1119,6 +1106,7 @@ def create_shipping_order(order_id):
             pay_method=pay_method,
             shipping_status="Processing",
             shipment_time=shipment_time,
+            status="Processing"
             )
 
         try:
@@ -1145,45 +1133,38 @@ def confirm_shipping_payment(shipping_id):
     order = Order.query.get_or_404(shipping.order_id)
     shipping_queue = ShippingQueue.query.filter_by(order_id=order.order_id).all()
     order_details = OrderDetail.query.filter_by(order_id=order.order_id).all()
-
-    # Truy vấn product_batches một lần dùng cho cả GET và POST
     product_batches = ProductBatch.query.filter(
         ProductBatch.order_detail_id.in_([od.order_detail_id for od in order_details])
     ).all()
 
     if request.method == "POST":
-        try:
+        try:            
             payment_amount = float(request.form['payment_amount'])
-
             if payment_amount < shipping.shipping_cost:
                 flash("Insufficient payment for shipping.", "danger")
                 return redirect(url_for('confirm_shipping_payment', shipping_id=shipping_id))
-
             shipping.shipping_status = "Paid"
-
-            # Cập nhật trạng thái shipping queue
             for shipping_queue_item in shipping_queue:
                 shipping_queue_item.status = "Delivered"
-
             all_shippings = Shipping.query.filter_by(order_id=order.order_id).all()
             if all(s.shipping_status == "Paid" or s.shipping_status =="Cancelled" for s in all_shippings) and \
                all(pb.manufacturing_status == "Completed" for pb in product_batches):
                 order.status = "Delivered"
-
+                shipping.status="Done"
+                for od in order_details:
+                    od.odstarus = "Done"
             db.session.commit()
             flash("Shipping payment confirmed. Shipping marked as Paid.", "success")
             return redirect(url_for('view_shipping', shipping_id=shipping_id))
-
         except ValueError:
             flash("Invalid payment amount. Please enter a valid number.", "danger")
         except Exception as e:
             db.session.rollback()
-            flash(f"Error during payment confirmation: {str(e)}", 'danger')    
+            flash(f"Error during payment confirmation: {str(e)}", 'danger') 
 
     deposit = (shipping.price * shipping.order.deposit_percent) / 100
-    total_payment_amount = int(float(shipping.shipping_cost) + float(deposit))
-
-   
+    total_payment_amount = int(float(shipping.shipping_cost) + float(deposit))   
+    
     return render_template(
         'confirm_shipping_payment.html',
         shipping=shipping,
@@ -1262,23 +1243,41 @@ def returns():
 
 @app.route('/create-return/<int:shipping_id>', methods=['GET', 'POST'])
 def create_return(shipping_id):
+
     shipping = Shipping.query.get_or_404(shipping_id)   
-    order=Order.query.get_or_404(shipping.order_id)    
-    shipping.shipping_status ="Cancelled" 
-    order.status="Cancelled" 
+    order = Order.query.get_or_404(shipping.order_id)    
+    shipping.shipping_status = "Cancelled"    
     total_amount = shipping.price    
-    deposit_amount =(shipping.price * shipping.order.deposit_percent) / 100
-    deficit_amount = float(total_amount) - float(deposit_amount)
+    deposit_percent = shipping.order.deposit_percent or 0
+    deposit_amount = (total_amount * deposit_percent) / 100
+    deficit_amount = total_amount - deposit_amount
+    deficit_amounts = Decimal(deficit_amount)
+    total_amounts= Decimal(total_amount)
+
+    # Tạo yêu cầu trả lại
     new_return = ReturnRequest(
         order_detail_id=shipping.order_id,
         return_status='Cancelled',          
         refund_method=deficit_amount,     
         quan=shipping.quan
     )
+
+    # Cập nhật giá trị price trong order
+    if shipping.status == "Done":
+        order.orprice = order.orprice - deficit_amounts
+    elif shipping.status == "Processing":
+        order.orprice = order.orprice - total_amounts
+
+    # Cập nhật thông tin vào cơ sở dữ liệu
+    db.session.commit()  # Commit các thay đổi trước khi thêm yêu cầu trả lại
+
     db.session.add(new_return)
-    db.session.commit()
+    db.session.commit()  # Commit lần nữa để lưu yêu cầu trả lại
+
+    # Hiển thị thông báo và chuyển hướng
     flash('Return request created successfully!', 'success')
     return redirect(url_for('returns'))
+
 
 @app.route('/classify-condition/<int:return_id>', methods=["POST"])
 @login_required
@@ -1314,9 +1313,6 @@ def classify_defect_reason(return_id):
 def view_return_request(return_id):
     return_request = ReturnRequest.query.get_or_404(return_id)
     return render_template('view-return-request.html', return_request=return_request)
-
-
-
 
 @app.route('/delete-return/<int:return_id>', methods=['POST'])
 def delete_return(return_id):

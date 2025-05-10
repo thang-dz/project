@@ -39,9 +39,7 @@
                     <p><strong>Provider:</strong> {{ shipping.provider }}</p>
                     <p><strong>Shipping Cost:</strong> ${{ shipping.shipping_cost | format_price }}</p>
                     <p><strong>Status:</strong> {{ shipping.shipping_status }}</p>
-                    <p><strong>Tracking Code Link:</strong> 
-                        <a href="https://tracking.example.com/{{ shipping.tracking_code }}" target="_blank">{{ shipping.tracking_code }}</a>
-                    </p>
+                    
                 {% else %}
                     <p>No shipping record found for this order.</p>
                 {% endif %}
