@@ -34,7 +34,7 @@
                 <i class="fas fa-plus-circle"></i> New Order
             </div>
             <div class="card-body">
-                <form method="POST">
+                <form method="POST" onsubmit="return checkForm(event)">
                     <!-- Material Name -->
                     <div class="form-group">
                         <label for="material_name"><i class="fas fa-cogs"></i> Material Name</label>
@@ -56,19 +56,19 @@
                     <!-- Supplier Name -->
                     <div class="form-group">
                         <label for="sup_name"><i class="fas fa-user"></i> Supplier Name</label>
-                        <input type="text" name="sup_name" id="sup_name" value="{{ sup_name }}" class="form-control" required>
+                        <input type="text" name="sup_name" id="sup_name" value="{{ sup_name }}" class="form-control" readonly>
                     </div>
 
                     <!-- Supplier Contact Info -->
                     <div class="form-group">
                         <label for="sup_contact_info"><i class="fas fa-phone"></i> Supplier Contact Info</label>
-                        <input type="text" name="sup_contact_info" id="sup_contact_info" value="{{ sup_contact_info }}" class="form-control" required>
+                        <input type="text" name="sup_contact_info" id="sup_contact_info" value="{{ sup_contact_info }}" class="form-control" readonly>
                     </div>
 
                     <!-- Supplier Address -->
                     <div class="form-group">
                         <label for="sup_address"><i class="fas fa-map-marker-alt"></i> Supplier Address</label>
-                        <input type="text" name="sup_address" id="sup_address" value="{{ sup_address }}" class="form-control" required>
+                        <input type="text" name="sup_address" id="sup_address" value="{{ sup_address }}" class="form-control" readonly>
                     </div>
 
                     <!-- Submit Button -->
@@ -107,4 +107,6 @@
         font-size: 14px;
     }
 </style>
+
+
 {% endblock %}
