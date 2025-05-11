@@ -33,10 +33,18 @@
             <input type="text" placeholder="Name" name="name" required />
             <label  class="font-weight-semibold text-dark">Email</label>
             <input type="email" placeholder="Email" name="email" required />
-            <label  class="font-weight-semibold text-dark">Password</label>
-            <input type="password" placeholder="Password" name="password" required />
+            <label class="font-weight-semibold text-dark">Password</label>
+            <div class="password-wrapper">
+              <input type="password" placeholder="Password" name="password" id="signup-password" required />
+              <i class="fa fa-eye toggle-password" toggle="#signup-password"></i>
+            </div>
+
             <label class="font-weight-semibold text-dark">Confirm Password</label>
-            <input type="password" placeholder="Confirm Password" name="confirm_password" required />
+            <div class="password-wrapper">
+              <input type="password" placeholder="Confirm Password" name="confirm_password" id="signup-confirm-password" required />
+              <i class="fa fa-eye toggle-password" toggle="#signup-confirm-password"></i>
+            </div>
+
           </div>
           <button type="submit">Sign Up</button>
         </form>
@@ -51,8 +59,12 @@
             <label  class="font-weight-semibold text-dark">Email</label>
             <input type="email" placeholder="Email" name="email" required />
             <br>
-            <label  class="font-weight-semibold text-dark">Password</label>
-            <input type="password" placeholder="Password" name="password" required />
+            <label class="font-weight-semibold text-dark">Password</label>
+            <div class="password-wrapper">
+              <input type="password" placeholder="Password" name="password" id="signin-password" required />
+              <i class="fa fa-eye toggle-password" toggle="#signin-password"></i>
+            </div>
+
           </div>   
           
           <button type="submit">Sign In</button>
